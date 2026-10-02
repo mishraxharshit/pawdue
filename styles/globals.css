@@ -1,0 +1,892 @@
+:root {
+  --bg: #f6f5f1;
+  --card: #ffffff;
+  --ink: #17211d;
+  --sub: #66705f;
+  --accent: #2b5d4c;
+  --accent-ink: #ffffff;
+  --gold: #c98a3d;
+  --line: #e2e1d8;
+  --ok: #3c7a57;
+  --warn: #b98431;
+  --overdue: #b4503d;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+/* App-wide font wrapper set in _app.js - keeps one brand typeface across
+   every page (marketing, dashboard, auth, public booking) instead of the
+   app pages falling back to the OS system font while only the marketing
+   pages carry the brand. */
+.pd-app-shell {
+  height: 100%;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+h1 { font-size: 1.4rem; margin: 0 0 4px; }
+h1 span { color: var(--accent); }
+.sub { color: var(--sub); font-size: .85rem; margin-bottom: 20px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.stats { display: flex; gap: 10px; margin-bottom: 18px; }
+.stat { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; }
+.stat b { display: block; font-size: 1.5rem; }
+.stat.overdue b { color: var(--overdue); }
+.stat.soon b { color: var(--warn); }
+.stat.ok b { color: var(--ok); }
+.stat span { font-size: .72rem; color: var(--sub); }
+
+form { display: grid; gap: 10px; }
+label { font-size: .78rem; color: var(--sub); display: block; margin-bottom: 3px; }
+input, select {
+  width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); font-size: .92rem;
+}
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* --- Phone input with country picker --- */
+.pd-phone-input { display: flex; flex-direction: column; gap: 6px; }
+.pd-phone-country { font-size: .85rem; }
+.pd-phone-local-wrap { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.pd-phone-prefix { padding: 10px 8px 10px 10px; color: var(--sub); font-size: .92rem; white-space: nowrap; }
+.pd-phone-local { border: none; border-radius: 0; padding-left: 2px; }
+.pd-phone-local:focus { outline: none; }
+
+button {
+  background: var(--accent); color: var(--accent-ink); border: none;
+  border-radius: 9px; padding: 10px 14px; font-size: .9rem; font-weight: 600; cursor: pointer;
+}
+button.ghost { background: transparent; color: var(--sub); border: 1px solid var(--line); }
+button.small { padding: 6px 10px; font-size: .78rem; }
+
+.dog { border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: var(--card); }
+.dogtop { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.dogname { font-weight: 600; }
+.dogmeta { font-size: .78rem; color: var(--sub); margin-top: 2px; }
+.badge { font-size: .7rem; padding: 3px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+.badge.overdue { background: rgba(201,80,63,.15); color: var(--overdue); }
+.badge.soon { background: rgba(201,138,31,.15); color: var(--warn); }
+.badge.ok { background: rgba(63,140,90,.15); color: var(--ok); }
+.actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.msgbox { margin-top: 10px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 10px; font-size: .85rem; white-space: pre-wrap; }
+.empty { text-align: center; color: var(--sub); padding: 30px 10px; font-size: .9rem; }
+.error { color: var(--overdue); font-size: .85rem; margin-top: 8px; }
+
+/* --- Client-facing status card (public booking page) --- */
+.client-status { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-top: 4px; }
+.client-status-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.client-status-dog { font-weight: 800; font-size: 1.05rem; }
+.client-status-breed { font-size: .8rem; color: var(--sub); }
+.client-status-bar-track { height: 8px; border-radius: 5px; background: var(--line); overflow: hidden; margin-bottom: 14px; }
+.client-status-bar-fill { height: 100%; border-radius: 5px; transition: width .3s ease; }
+.client-status-bar-fill.client-status-ok { background: var(--ok); }
+.client-status-bar-fill.client-status-soon { background: var(--warn); }
+.client-status-bar-fill.client-status-overdue { background: var(--overdue); }
+.client-status-dates { display: flex; justify-content: space-between; }
+.client-status-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: var(--sub); font-weight: 700; }
+.client-status-value { font-size: .92rem; font-weight: 700; margin-top: 2px; }
+.client-status-note { font-size: .8rem; color: var(--sub); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+.authcard { max-width: 380px; margin: 60px auto; }
+.link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+/* ============================================================
+   Landing page v3 — scoped to .pd-landing so the app (dashboard,
+   login, register) keeps its own separate look untouched.
+   Palette is a "grooming studio" color story: deep pine green as
+   the single brand color (waxed canvas, barbershop signage) with
+   a brass/leather gold reserved for the one primary action per
+   view — disciplined rather than four mascot colors competing for
+   attention. Paper backgrounds instead of stark white or cream.
+   Type: one grotesk family throughout (Plus Jakarta Sans), weight
+   and tracking do the personality work instead of a second face.
+   ============================================================ */
+.pd-landing {
+  --pd-ink: #17211D;
+  --pd-ink-soft: #5B6459;
+  --pd-white: #FFFFFF;
+  --pd-paper: #F6F5F0;
+  --pd-mint: #EEF3EE;
+  --pd-cream: #FBF3E7;
+  --pd-teal: #2B5D4C;
+  --pd-teal-deep: #1D4536;
+  --pd-yellow: #C98A3D;
+  --pd-sky: #4C7A8C;
+  --pd-coral: #C98A3D;
+  --pd-line: #E1E4DD;
+  background: var(--pd-white);
+  color: var(--pd-ink);
+  font-family: var(--font-body, "Plus Jakarta Sans", -apple-system, sans-serif);
+}
+.pd-landing .pd-display {
+  font-family: var(--font-display, "Plus Jakarta Sans", -apple-system, sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.pd-shell { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.pd-band { padding: 64px 0; }
+.pd-band.pd-band-tint { background: var(--pd-mint); }
+.pd-band-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* --- Nav --- */
+.pd-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 22px 0;
+}
+.pd-nav-links { display: flex; gap: 22px; align-items: center; }
+.pd-navlink { font-size: .92rem; font-weight: 700; color: var(--pd-ink); text-decoration: none; }
+.pd-navlink:hover { color: var(--pd-teal-deep); }
+.pd-nav-cta {
+  background: var(--pd-teal); color: #fff; text-decoration: none;
+  font-weight: 800; font-size: .88rem; padding: 10px 20px; border-radius: 100px;
+}
+
+@media (max-width: 560px) {
+  .pd-nav-links { gap: 12px; }
+  /* Keep "Log in" and the primary CTA; drop Pricing/Help to fit narrow
+     screens rather than wrapping into a second row. */
+  .pd-nav-links > .pd-navlink:nth-child(1),
+  .pd-nav-links > .pd-navlink:nth-child(2) { display: none; }
+  .pd-nav-cta { padding: 9px 16px; font-size: .82rem; }
+}
+
+/* --- Hero --- */
+.pd-hero {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+  align-items: center; padding: 30px 0 60px; position: relative;
+}
+@media (max-width: 860px) { .pd-hero { grid-template-columns: 1fr; padding: 10px 0 30px; } }
+.pd-hero h1 {
+  font-size: clamp(2.3rem, 4.6vw, 3.3rem); line-height: 1.14; margin: 0 0 18px;
+}
+.pd-hero p {
+  font-size: 1.1rem; line-height: 1.6; color: var(--pd-ink-soft);
+  max-width: 44ch; margin: 0 0 28px;
+}
+.pd-cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.pd-btn {
+  display: inline-block; text-decoration: none; font-size: .98rem; font-weight: 800;
+  padding: 14px 28px; border-radius: 100px; border: 2px solid transparent; cursor: pointer;
+}
+.pd-btn-primary { background: var(--pd-coral); color: #fff; }
+.pd-btn-primary:hover { background: #a86f2f; }
+.pd-btn-ghost { color: var(--pd-ink); border-color: var(--pd-line); background: #fff; }
+.pd-btn-ghost:hover { border-color: var(--pd-ink); }
+
+/* --- Hero art: soft color blobs behind a product-preview panel --- */
+.pd-hero-art { position: relative; display: flex; justify-content: center; align-items: center; min-height: 320px; }
+.pd-blob { position: absolute; border-radius: 50%; opacity: .5; filter: blur(2px); z-index: 0; }
+.pd-blob-1 { width: 220px; height: 220px; background: var(--pd-yellow); top: -10px; left: 10%; opacity: .35; }
+.pd-blob-2 { width: 160px; height: 160px; background: var(--pd-sky); bottom: 0; right: 8%; opacity: .3; }
+.pd-dog-svg { position: relative; z-index: 1; width: 100%; max-width: 340px; height: auto; }
+
+/* --- Hero product preview: a stylized, non-functional mirror of the real
+   dashboard due-list, shown instead of a mascot illustration so a visitor
+   can see the actual product in the first few seconds. --- */
+.pd-preview {
+  position: relative; z-index: 1; width: 100%; max-width: 400px;
+  background: #fff; border: 1px solid var(--pd-line); border-radius: 18px;
+  box-shadow: 0 20px 50px -20px rgba(23,33,29,.25); overflow: hidden;
+}
+.pd-preview-bar {
+  display: flex; align-items: center; gap: 6px; padding: 12px 14px;
+  border-bottom: 1px solid var(--pd-line); background: var(--pd-paper, var(--pd-mint));
+}
+.pd-preview-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pd-line); }
+.pd-preview-bar-title { margin-left: 6px; font-size: .74rem; font-weight: 700; color: var(--pd-ink-soft); flex: 1; }
+.pd-preview-bell { color: var(--pd-ink-soft); display: flex; }
+.pd-preview-body { padding: 10px 12px 14px; display: grid; gap: 8px; }
+.pd-preview-row {
+  display: grid; grid-template-columns: 30px 1fr auto auto; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 10px; border: 1px solid var(--pd-line);
+}
+.pd-preview-avatar {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--pd-mint); color: var(--pd-teal-deep);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pd-preview-info { display: flex; flex-direction: column; min-width: 0; }
+.pd-preview-name { font-size: .84rem; font-weight: 700; line-height: 1.2; }
+.pd-preview-breed { font-size: .68rem; color: var(--pd-ink-soft); }
+.pd-preview-badge { font-size: .64rem; font-weight: 800; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.pd-preview-overdue { background: rgba(180,80,61,.13); color: #b4503d; }
+.pd-preview-soon { background: rgba(201,138,61,.16); color: #8a5f1f; }
+.pd-preview-ok { background: rgba(43,93,76,.13); color: var(--pd-teal-deep); }
+.pd-preview-due { font-size: .7rem; color: var(--pd-ink-soft); white-space: nowrap; }
+.pd-preview-sent {
+  display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: .72rem;
+  color: var(--pd-teal-deep); font-weight: 700; padding: 8px 10px; background: var(--pd-mint);
+  border-radius: 10px;
+}
+@media (max-width: 420px) {
+  .pd-preview-row { grid-template-columns: 26px 1fr auto; }
+  .pd-preview-due { display: none; }
+}
+
+/* --- Section headers --- */
+.pd-eyebrow { font-size: .8rem; font-weight: 800; color: var(--pd-teal-deep); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px; }
+.pd-section-head { max-width: 56ch; margin: 0 0 40px; }
+.pd-section-head h2 { font-size: 1.9rem; margin: 0 0 10px; }
+.pd-section-head p { color: var(--pd-ink-soft); font-size: 1rem; margin: 0; line-height: 1.55; }
+.pd-section-head.pd-center { margin-left: auto; margin-right: auto; text-align: center; }
+
+/* --- Feature icon badges (also reused on /help and /feedback) --- */
+.pd-icon-badge {
+  width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center;
+  justify-content: center; margin-bottom: 16px; font-size: 1.4rem;
+}
+.pd-icon-badge.teal { background: #E3EAE6; }
+.pd-icon-badge.yellow { background: #F5E7D2; }
+.pd-icon-badge.coral { background: #F5E7D2; }
+.pd-icon-badge.sky { background: #E4EAE7; }
+
+/* --- Hero trust strip: the 3 core value props, compressed into one
+   scannable row instead of a whole separate "Features" section people
+   have to scroll past before reaching any proof. --- */
+.pd-trust-strip { display: flex; gap: 22px; margin-top: 30px; flex-wrap: wrap; }
+.pd-trust-strip.pd-center { justify-content: center; margin-bottom: 36px; }
+.pd-trust-item { display: flex; align-items: center; gap: 8px; font-size: .86rem; font-weight: 700; color: var(--pd-ink-soft); }
+.pd-trust-item svg { flex-shrink: 0; color: var(--pd-teal-deep); }
+
+/* --- Capability strip: sits where a customer-logo bar would normally go.
+   Deliberately not fake logos or invented numbers. --- */
+.pd-capstrip { padding: 26px 0; }
+.pd-capstrip-text {
+  text-align: center; margin: 0; font-size: .92rem; font-weight: 700;
+  color: var(--pd-ink-soft); max-width: 56ch; margin-left: auto; margin-right: auto;
+}
+
+/* --- Feature grid --- */
+.pd-feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+@media (max-width: 940px) { .pd-feature-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .pd-feature-grid { grid-template-columns: 1fr; } }
+.pd-feature-card {
+  border: 1px solid var(--pd-line); border-radius: 16px; padding: 22px 20px; background: #fff;
+}
+.pd-feature-card h3 { margin: 0 0 8px; font-size: 1rem; }
+.pd-feature-card p { margin: 0; color: var(--pd-ink-soft); font-size: .88rem; line-height: 1.55; }
+
+/* --- Channel fallback chain: a real behavior from the code (see
+   lib/messaging.js), given its own visual instead of one bullet among
+   many, since it's the most concrete, checkable claim on the page. --- */
+.pd-flow { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 40px; flex-wrap: wrap; }
+.pd-flow-step { text-align: center; width: 100px; }
+.pd-flow-icon {
+  width: 52px; height: 52px; border-radius: 16px; background: var(--pd-mint, #E4F5F2);
+  color: var(--pd-teal-deep); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+}
+.pd-flow-label { font-weight: 800; font-size: .92rem; }
+.pd-flow-sub { font-size: .74rem; color: var(--pd-ink-soft); margin-top: 2px; }
+.pd-flow-arrow { font-size: 1.3rem; color: var(--pd-line); font-weight: 700; }
+@media (max-width: 560px) { .pd-flow-arrow { transform: rotate(90deg); } }
+.pd-flow-caption { text-align: center; color: var(--pd-ink-soft); font-size: .86rem; max-width: 50ch; margin: 22px auto 0; }
+
+/* --- Testimonials: plain cards, no invented avatars/names presented as
+   real people. --- */
+.pd-quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 860px) { .pd-quotes { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; } }
+.pd-quote-card {
+  margin: 0; border: 1px solid var(--pd-line); border-radius: 16px; padding: 24px 22px;
+  background: #fff; display: flex; flex-direction: column; gap: 14px;
+}
+.pd-quote-card blockquote { margin: 0; font-size: .95rem; line-height: 1.55; color: var(--pd-ink); }
+.pd-quote-card figcaption { font-size: .8rem; color: var(--pd-ink-soft); font-weight: 700; }
+
+/* --- How it works --- */
+.pd-steps-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+@media (max-width: 780px) { .pd-steps-row { grid-template-columns: 1fr; } }
+.pd-step-card { position: relative; padding-top: 8px; }
+.pd-step-num {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--pd-ink);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.05rem; margin-bottom: 16px;
+}
+.pd-step-card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.pd-step-card p { margin: 0; color: var(--pd-ink-soft); font-size: .92rem; line-height: 1.55; max-width: 38ch; }
+
+/* --- Mid-page CTA: sits right under the strongest proof moment
+   (the comparison table) instead of making the visitor scroll all the
+   way to the bottom once they're already convinced. --- */
+.pd-midcta { text-align: center; margin-top: 34px; }
+.pd-midcta-note { font-size: .82rem; color: var(--pd-ink-soft); margin: 12px 0 0; }
+
+/* --- Final CTA --- */
+.pd-final {
+  text-align: center; border-radius: 28px; padding: 60px 24px;
+  background: linear-gradient(135deg, var(--pd-teal) 0%, var(--pd-teal-deep) 100%);
+  color: #fff;
+}
+.pd-final h2 { font-size: 1.9rem; max-width: 22ch; margin: 0 auto 12px; color: #fff; }
+.pd-final p { color: #D6E3DA; margin: 0 0 12px; }
+.pd-final .pd-btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.pd-final .pd-btn-ghost:hover { border-color: #fff; }
+.pd-final-reassure { font-size: .78rem; color: #BFD1C6; margin: 22px 0 0; }
+
+.pd-footer {
+  text-align: center; color: var(--pd-ink-soft); font-size: .82rem; padding: 30px 0 10px;
+}
+
+/* --- Brand mark (nav + footer) --- */
+.pd-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.pd-nav-logo { text-decoration: none; }
+.pd-logo-mark { flex-shrink: 0; display: block; }
+.pd-logo-word { font-family: var(--font-display, "Nunito", -apple-system, sans-serif); font-weight: 800; font-size: 1.3rem; }
+.pd-logo-word em { font-style: normal; color: #C98A3D; }
+
+/* --- Interactive due-date calculator (landing "try it" section) --- */
+.pd-calc {
+  background: #fff; border: 1px solid var(--pd-line); border-radius: 22px;
+  padding: 32px; max-width: 640px; margin: 0 auto;
+}
+.pd-calc-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 26px; }
+@media (max-width: 560px) { .pd-calc-inputs { grid-template-columns: 1fr; } }
+.pd-calc-inputs label { display: block; }
+.pd-calc-inputs span { display: block; font-size: .78rem; font-weight: 700; color: var(--pd-ink-soft); margin-bottom: 6px; }
+.pd-calc-inputs select, .pd-calc-inputs input {
+  width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--pd-line);
+  font-size: .92rem; font-family: inherit; background: var(--pd-mint); color: var(--pd-ink);
+}
+.pd-calc-bar-track { height: 10px; border-radius: 6px; background: var(--pd-line); overflow: hidden; margin-bottom: 22px; }
+.pd-calc-bar-fill { height: 100%; border-radius: 6px; background: var(--pd-teal); transition: width .3s ease, background-color .3s ease; }
+.pd-calc-ok .pd-calc-bar-fill { background: var(--pd-teal); }
+.pd-calc-soon .pd-calc-bar-fill { background: var(--pd-yellow); }
+.pd-calc-overdue .pd-calc-bar-fill { background: var(--pd-coral); }
+.pd-calc-readout { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.pd-calc-label { font-size: .74rem; color: var(--pd-ink-soft); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.pd-calc-value { font-size: 1.15rem; font-weight: 800; }
+.pd-calc-badge { margin-left: auto; padding: 6px 14px; border-radius: 100px; font-weight: 800; font-size: .8rem; }
+.pd-calc-badge-ok { background: rgba(43,93,76,.13); color: var(--pd-teal-deep); }
+.pd-calc-badge-soon { background: rgba(201,138,61,.18); color: #8a5f1f; }
+.pd-calc-badge-overdue { background: rgba(180,80,61,.15); color: #b4503d; }
+.pd-calc-note { margin: 20px 0 0; font-size: .86rem; color: var(--pd-ink-soft); border-top: 1px dashed var(--pd-line); padding-top: 16px; }
+
+/* --- "PawDue vs the old way" comparison table --- */
+.pd-cmp { max-width: 720px; margin: 0 auto; border: 1px solid var(--pd-line); border-radius: 18px; overflow: hidden; background: #fff; }
+.pd-cmp-row { display: grid; grid-template-columns: 2fr repeat(3, 1fr); align-items: center; }
+.pd-cmp-row:not(:last-child) { border-bottom: 1px solid var(--pd-line); }
+.pd-cmp-head { background: var(--pd-mint); font-weight: 800; font-size: .82rem; }
+.pd-cmp-head .pd-cmp-col { padding: 14px 8px; }
+.pd-cmp-label { padding: 14px 18px; font-size: .88rem; }
+.pd-cmp-col { text-align: center; padding: 12px 8px; font-size: .88rem; color: var(--pd-ink-soft); }
+.pd-cmp-col-pd { font-weight: 800; color: var(--pd-teal-deep); background: rgba(21,156,141,.06); }
+.pd-cmp-cell.yes { color: var(--pd-teal-deep); font-weight: 800; }
+.pd-cmp-cell.no { color: #c7bfb8; }
+@media (max-width: 620px) {
+  .pd-cmp-row { grid-template-columns: 1.4fr repeat(3, 1fr); }
+  .pd-cmp-label { padding: 12px 10px; font-size: .8rem; }
+  .pd-cmp-col { font-size: .78rem; padding: 12px 4px; }
+}
+
+/* --- FAQ accordion (pricing + help pages) --- */
+.pd-faq { max-width: 720px; margin: 0 auto; display: grid; gap: 10px; }
+.pd-faq-item { border: 1px solid var(--pd-line); border-radius: 14px; background: #fff; overflow: hidden; }
+.pd-faq-item.open { border-color: var(--pd-teal); }
+.pd-faq-q {
+  width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  font-family: inherit; font-size: .95rem; font-weight: 700; color: var(--pd-ink);
+}
+.pd-faq-chevron { font-size: 1.2rem; color: var(--pd-teal-deep); flex-shrink: 0; }
+.pd-faq-a { padding: 0 20px 18px; color: var(--pd-ink-soft); font-size: .9rem; line-height: 1.6; }
+
+/* --- Branded pricing page (matches the pd-landing marketing look) --- */
+.pd-price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 980px; margin: 0 auto; align-items: stretch; }
+@media (max-width: 860px) { .pd-price-grid { grid-template-columns: 1fr; max-width: 480px; } }
+.pd-price-card {
+  background: #fff; border: 1px solid var(--pd-line); border-radius: 22px; padding: 30px 26px;
+  display: flex; flex-direction: column;
+}
+.pd-price-card.pd-price-highlight { background: var(--pd-ink); border-color: var(--pd-ink); color: #fff; position: relative; transform: translateY(-8px); }
+.pd-price-card.pd-price-highlight .pd-price-sub { color: #b9c3c5; }
+.pd-price-ribbon {
+  position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+  background: var(--pd-coral); color: #fff; font-size: .72rem; font-weight: 800;
+  padding: 5px 14px; border-radius: 100px; letter-spacing: .03em;
+}
+.pd-price-name { font-size: 1.05rem; font-weight: 800; margin: 0 0 6px; }
+.pd-price-amount { font-size: 2.4rem; font-weight: 800; margin: 4px 0 2px; }
+.pd-price-amount span { font-size: .85rem; font-weight: 600; opacity: .7; }
+.pd-price-sub { font-size: .88rem; color: var(--pd-ink-soft); margin: 0 0 22px; }
+.pd-price-feats { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 10px; flex: 1; }
+.pd-price-feats li { font-size: .88rem; padding-left: 24px; position: relative; line-height: 1.4; }
+.pd-price-feats li::before { content: "\2713"; position: absolute; left: 0; color: var(--pd-teal); font-weight: 800; }
+.pd-price-highlight .pd-price-feats li::before { color: var(--pd-coral); }
+.pd-price-card .pd-btn { width: 100%; text-align: center; border: none; box-sizing: border-box; }
+.pd-price-card button.pd-btn { font-family: inherit; }
+.pd-price-highlight .pd-btn-ghost { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.3); }
+
+/* Feature-by-feature comparison table underneath the price cards, so
+   groomers can see exactly what upgrading buys them at a glance instead
+   of re-reading three overlapping bullet lists. */
+.pd-price-compare { max-width: 780px; margin: 0 auto; border: 1px solid var(--pd-line); border-radius: 18px; overflow: hidden; background: #fff; }
+.pd-pc-row { display: grid; grid-template-columns: 2fr repeat(3, 1fr); align-items: center; }
+.pd-pc-row:not(:last-child) { border-bottom: 1px solid var(--pd-line); }
+.pd-pc-head { background: var(--pd-mint); font-weight: 800; font-size: .8rem; }
+.pd-pc-row > div { padding: 13px 10px; text-align: center; font-size: .86rem; }
+.pd-pc-row > div:first-child { text-align: left; padding-left: 18px; color: var(--pd-ink); }
+.pd-pc-head > div:first-child { color: var(--pd-ink-soft); }
+@media (max-width: 620px) { .pd-pc-row > div { font-size: .76rem; padding: 12px 4px; } .pd-pc-row > div:first-child { padding-left: 12px; } }
+
+/* --- Site-wide footer --- */
+.pd-sitefooter { background: var(--pd-mint, #EEF3EE); border-top: 1px solid var(--pd-line); }
+.pd-sitefooter-inner { padding: 52px 24px 26px; }
+.pd-sitefooter-top { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 40px; }
+@media (max-width: 780px) { .pd-sitefooter-top { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .pd-sitefooter-top { grid-template-columns: 1fr; } }
+.pd-sitefooter-brand p { margin: 14px 0 0; color: var(--pd-ink-soft); font-size: .86rem; line-height: 1.55; max-width: 32ch; }
+.pd-sitefooter-col { display: flex; flex-direction: column; gap: 10px; }
+.pd-sitefooter-heading { font-size: .76rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--pd-ink-soft); margin-bottom: 4px; }
+.pd-sitefooter-col a { color: var(--pd-ink); text-decoration: none; font-size: .9rem; }
+.pd-sitefooter-col a:hover { color: var(--pd-teal-deep); }
+.pd-sitefooter-bottom {
+  border-top: 1px solid var(--pd-line); padding-top: 20px; display: flex; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px; font-size: .8rem; color: var(--pd-ink-soft);
+}
+
+/* --- Static content pages (privacy / terms / help) --- */
+.pd-content { max-width: 760px; margin: 0 auto; padding: 50px 0 30px; }
+.pd-content h1 { font-size: 2.1rem; margin: 0 0 6px; }
+.pd-content .pd-content-updated { color: var(--pd-ink-soft); font-size: .85rem; margin: 0 0 40px; }
+.pd-content h2 { font-size: 1.2rem; margin: 34px 0 10px; }
+.pd-content p, .pd-content li { color: var(--pd-ink-soft); font-size: .96rem; line-height: 1.7; }
+.pd-content ul { padding-left: 22px; }
+.pd-content a { color: var(--pd-teal-deep); }
+
+/* --- Help center --- */
+.pd-help-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 48px; }
+@media (max-width: 780px) { .pd-help-grid { grid-template-columns: 1fr; } }
+.pd-help-card { background: #fff; border: 1px solid var(--pd-line); border-radius: 16px; padding: 22px; text-decoration: none; color: var(--pd-ink); display: block; }
+.pd-help-card:hover { border-color: var(--pd-teal); }
+.pd-help-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.pd-help-card p { margin: 0; color: var(--pd-ink-soft); font-size: .86rem; line-height: 1.5; }
+
+/* --- Feedback form --- */
+.pd-feedback-form { max-width: 560px; margin: 0 auto; background: #fff; border: 1px solid var(--pd-line); border-radius: 20px; padding: 30px; display: grid; gap: 16px; }
+.pd-feedback-form label { display: block; font-size: .82rem; font-weight: 700; color: var(--pd-ink-soft); margin-bottom: 6px; }
+.pd-feedback-form input, .pd-feedback-form select, .pd-feedback-form textarea {
+  width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--pd-line);
+  font-size: .92rem; font-family: inherit; background: var(--pd-mint); color: var(--pd-ink); resize: vertical;
+}
+.pd-feedback-success { text-align: center; padding: 50px 20px; }
+.pd-feedback-success .pd-icon-badge { margin: 0 auto 18px; }
+
+/* ---------- Pricing & usage (uses the app's root tokens, so these work on
+   both the dashboard and the standalone pricing page - not scoped to
+   .pd-landing like the marketing page above) ---------- */
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 760px) { .pricing-grid { grid-template-columns: 1fr; } }
+.price-card {
+  border: 1px solid var(--line); border-radius: 14px; padding: 26px 22px;
+  background: var(--card); display: flex; flex-direction: column;
+}
+.price-card.price-highlight { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.price-card.price-highlight p, .price-card.price-highlight .price-sub { color: #cfc7bf; }
+.price-card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.price-card .price-amount { font-size: 2rem; font-weight: 700; margin: 6px 0 4px; }
+.price-card .price-amount span { font-size: .8rem; font-weight: 400; opacity: .75; }
+.price-card ul { list-style: none; margin: 16px 0 22px; padding: 0; display: grid; gap: 8px; }
+.price-card li { font-size: .86rem; padding-left: 18px; position: relative; }
+.price-card li::before { content: "\2713"; position: absolute; left: 0; color: var(--accent); }
+.price-card.price-highlight li::before { color: var(--accent); }
+.price-card button, .price-card a.btnlink {
+  margin-top: auto; text-align: center; width: 100%; display: block; text-decoration: none;
+  box-sizing: border-box;
+}
+.usage-bar {
+  border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
+  background: var(--card); flex-wrap: wrap; gap: 10px;
+}
+.usage-bar .usage-label { font-size: .85rem; color: var(--sub); }
+.usage-bar .usage-label b { color: var(--ink); }
+
+/* ============================================================
+   Dashboard app shell — icon sidebar + topbar + table, replacing
+   the old single-column card list with a proper SaaS-style layout.
+   Uses the app's root tokens (--ink, --line, --accent, etc.) rather
+   than the pd-landing marketing palette, since this is the product
+   itself, not a marketing page.
+   ============================================================ */
+/* --- Availability settings form --- */
+.pd-avail-label { margin-top: 14px; font-weight: 700; }
+.pd-avail-label:first-of-type { margin-top: 0; }
+.pd-avail-days { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.pd-avail-day {
+  width: 44px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; color: var(--sub); font-size: .82rem; font-weight: 700; cursor: pointer;
+}
+.pd-avail-day.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pd-avail-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px; }
+@media (max-width: 560px) { .pd-avail-row { grid-template-columns: 1fr; } }
+.pd-avail-checkline {
+  display: flex; align-items: center; gap: 8px; margin-top: 18px; font-size: .88rem;
+  color: var(--ink); font-weight: 600; cursor: pointer;
+}
+.pd-avail-checkline input { width: auto; }
+
+.pd-app { display: flex; min-height: 100vh; background: var(--bg); }
+
+.pd-sidebar {
+  width: 68px; flex-shrink: 0; background: var(--card); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; padding: 18px 0; gap: 6px;
+  position: sticky; top: 0; height: 100vh;
+}
+.pd-sidebar-logo { margin-bottom: 14px; }
+.pd-sidebar-nav { display: flex; flex-direction: column; gap: 6px; flex: 1; width: 100%; align-items: center; }
+.pd-sidebar-btn {
+  width: 42px; height: 42px; border-radius: 12px; border: none; background: transparent;
+  color: var(--sub); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  position: relative;
+}
+.pd-sidebar-btn:hover { background: var(--bg); color: var(--ink); }
+.pd-sidebar-btn.active { background: var(--accent); color: #fff; }
+.pd-sidebar-badge {
+  position: absolute; top: 2px; right: 2px; background: var(--overdue); color: #fff;
+  font-size: .62rem; font-weight: 700; min-width: 15px; height: 15px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px;
+}
+.pd-sidebar-bottom { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+/* No max-width cap here on purpose: this is a data table, and on a wide
+   monitor capping it without centering left a large dead gray strip on the
+   right instead of the content using the space it has. */
+.pd-main { flex: 1; min-width: 0; padding: 22px 28px 60px; }
+
+.pd-topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.pd-topbar h1 { font-size: 1.5rem; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+.pd-topbar-date { color: var(--sub); font-size: .84rem; }
+.pd-topbar-actions { display: flex; align-items: center; gap: 8px; }
+.pd-icon-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--card);
+  color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;
+}
+.pd-icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.pd-icon-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pd-icon-btn.primary:hover { opacity: .9; color: #fff; }
+
+.pd-profile { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px 4px 4px; border-radius: 100px; border: 1px solid var(--line); background: var(--card); position: relative; }
+.pd-profile-name { font-size: .82rem; font-weight: 700; line-height: 1.15; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-profile-sub { font-size: .68rem; color: var(--sub); }
+.pd-profile-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px); width: 200px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.12); z-index: 60; padding: 8px;
+}
+.pd-profile-dropdown button {
+  width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--ink);
+  padding: 9px 10px; font-size: .85rem; font-weight: 600; border-radius: 8px; cursor: pointer; text-align: left;
+}
+.pd-profile-dropdown button:hover { background: var(--bg); }
+.pd-danger-item { color: var(--overdue) !important; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px !important; }
+.pd-danger-btn { background: var(--overdue); color: #fff; border: none; }
+.pd-danger-btn:hover { opacity: .9; }
+.pd-danger-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.pd-avatar { border-radius: 50%; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+
+/* --- Stat chips --- */
+/* --- Revenue recovered banner --- */
+.pd-revenue-banner {
+  background: linear-gradient(135deg, var(--accent) 0%, #b8461f 100%); color: #fff;
+  border-radius: 16px; padding: 20px 22px; margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.pd-revenue-loading { min-height: 78px; background: var(--card); border: 1px solid var(--line); }
+.pd-revenue-num { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+.pd-revenue-label { font-size: .82rem; opacity: .92; margin-top: 2px; }
+.pd-revenue-edit-btn {
+  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); color: #fff;
+  border-radius: 100px; padding: 7px 14px; font-size: .78rem; font-weight: 700;
+  display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;
+}
+.pd-revenue-edit-btn:hover { background: rgba(255,255,255,.26); }
+.pd-revenue-edit { display: flex; align-items: center; gap: 6px; font-size: .85rem; }
+.pd-revenue-edit input {
+  width: 70px; padding: 6px 8px; border-radius: 8px; border: none; font-size: .85rem;
+  background: #fff; color: var(--ink);
+}
+.pd-revenue-edit .pd-row-action { background: rgba(255,255,255,.16); color: #fff; }
+.pd-revenue-edit .pd-row-action:hover { background: rgba(255,255,255,.26); border-color: transparent; }
+
+/* --- Analytics view --- */
+.pd-analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 860px) { .pd-analytics-grid { grid-template-columns: 1fr; } }
+
+.pd-chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.pd-chart-loading { min-height: 220px; }
+.pd-chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
+.pd-chart-head h3 { margin: 0; font-size: .95rem; }
+.pd-chart-sub { font-size: .74rem; color: var(--sub); }
+.pd-live-dot::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-right: 5px; animation: pd-pulse 1.6s infinite; }
+@keyframes pd-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+.pd-chart-svg { width: 100%; height: 170px; overflow: visible; }
+.pd-chart-value { font-size: 8px; fill: var(--ink); font-weight: 700; }
+.pd-chart-axis-label { font-size: 8px; fill: var(--sub); }
+
+.pd-donut-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.pd-donut-svg { width: 130px; height: 130px; flex-shrink: 0; }
+.pd-donut-total { font-size: 22px; font-weight: 800; fill: var(--ink); }
+.pd-donut-total-label { font-size: 9px; fill: var(--sub); text-transform: uppercase; letter-spacing: .04em; }
+.pd-donut-legend { display: flex; flex-direction: column; gap: 8px; font-size: .85rem; }
+.pd-donut-legend-item { display: flex; align-items: center; gap: 8px; color: var(--sub); }
+.pd-donut-legend-item b { color: var(--ink); margin-left: auto; padding-left: 10px; }
+.pd-donut-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+.pd-breakdown-group { display: flex; flex-direction: column; gap: 10px; }
+.pd-breakdown-divider { border-top: 1px solid var(--line); margin: 14px 0; }
+.pd-breakdown-row { display: grid; grid-template-columns: 80px 1fr 24px; align-items: center; gap: 10px; }
+.pd-breakdown-label { font-size: .8rem; color: var(--sub); }
+.pd-breakdown-track { height: 8px; border-radius: 5px; background: var(--bg); overflow: hidden; }
+.pd-breakdown-fill { height: 100%; border-radius: 5px; transition: width .3s ease; }
+.pd-breakdown-value { font-size: .82rem; font-weight: 700; text-align: right; }
+
+.pd-activity-list { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
+.pd-activity-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.pd-activity-item:last-child { border-bottom: none; }
+.pd-activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--ok); }
+.pd-activity-dot.booking { background: var(--accent); }
+.pd-activity-dot.failed { background: var(--overdue); }
+.pd-activity-text { flex: 1; min-width: 0; font-size: .85rem; }
+.pd-activity-sub { font-size: .72rem; color: var(--sub); }
+.pd-activity-time { font-size: .72rem; color: var(--sub); white-space: nowrap; }
+
+.pd-stat-chips { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.pd-stat-chip { flex: 1; min-width: 140px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+.pd-stat-chip-num { font-size: 1.4rem; font-weight: 800; }
+.pd-stat-chip-label { font-size: .76rem; color: var(--sub); }
+.pd-stat-chip.overdue .pd-stat-chip-num { color: var(--overdue); }
+.pd-stat-chip.soon .pd-stat-chip-num { color: var(--warn); }
+.pd-stat-chip.ok .pd-stat-chip-num { color: var(--ok); }
+
+/* --- Filter bar --- */
+.pd-filterbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.pd-searchbox { position: relative; flex: 1; min-width: 200px; }
+.pd-searchbox svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--sub); }
+.pd-searchbox input { width: 100%; padding: 9px 12px 9px 36px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: .88rem; }
+.pd-select {
+  padding: 9px 30px 9px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--card);
+  color: var(--ink); font-size: .85rem; font-weight: 600; cursor: pointer; appearance: none;
+  background-image: none;
+}
+.pd-select-wrap { position: relative; }
+.pd-select-wrap svg { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--sub); }
+.pd-groupby { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.pd-groupby-label { font-size: .8rem; color: var(--sub); }
+.pd-segmented { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 100px; padding: 3px; }
+.pd-segmented button { border: none; background: none; padding: 6px 14px; border-radius: 100px; font-size: .8rem; font-weight: 700; color: var(--sub); cursor: pointer; }
+.pd-segmented button.active { background: var(--ink); color: var(--bg); }
+
+/* --- Dog table --- */
+.pd-table { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.pd-trow {
+  /* Actions gets a fixed track (132px = 4 x 30px buttons + gaps) instead of
+     a flexible fr share. A flexible last column can get squeezed to nothing
+     - or clipped entirely by .pd-table's overflow:hidden - the moment any
+     earlier cell's content demands more width than its fr share expected.
+     Fixed-width guarantees it's always there regardless of what's in Dog/
+     Owner/Due. */
+  display: grid; grid-template-columns: 34px 2fr 1.6fr 1.3fr 1fr 140px; align-items: center;
+  padding: 12px 16px; gap: 10px;
+}
+.pd-trow.pd-thead { background: var(--bg); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--sub); padding: 10px 16px; }
+.pd-trow:not(.pd-thead):not(:last-child) { border-bottom: 1px solid var(--line); }
+.pd-trow:not(.pd-thead):hover { background: var(--bg); }
+.pd-trow-group { grid-column: 1 / -1; background: var(--bg); font-size: .78rem; font-weight: 800; color: var(--sub); padding: 8px 16px; text-transform: uppercase; letter-spacing: .04em; }
+/* min-width: 0 on every flexible grid cell: a grid item's default min-width
+   is auto (i.e. "at least as wide as my content"), which lets a long dog
+   name, owner name, or breed silently push the whole row wider than the
+   table and clip whatever's in the last column. This is what makes the
+   fr-based columns above safe to use. */
+.pd-tcell-dog { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pd-tcell-dog-name { font-weight: 700; font-size: .92rem; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pd-tcell-dog-breed { font-size: .76rem; color: var(--sub); }
+.pd-tcell-owner { font-size: .85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-tcell-owner-phone { font-size: .74rem; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-tcell-due-col { min-width: 0; }
+.pd-tcell-due { font-size: .85rem; }
+.pd-tcell-due-sub { font-size: .74rem; color: var(--sub); }
+.pd-tcell-actions { display: flex; gap: 4px; justify-content: flex-end; min-width: 0; }
+/* Always visible at rest, not just on hover: a fully transparent icon
+   button in a pale gray tone against a white row is easy to miss entirely,
+   which is exactly what was being reported. A light chip + a clearly dark
+   icon means the action is obvious without needing to discover it. */
+.pd-row-action {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+  color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  flex-shrink: 0;
+}
+.pd-row-action:hover { background: #fff; border-color: var(--accent); color: var(--accent); }
+.pd-row-action:disabled { opacity: .4; cursor: default; }
+.pd-row-msgbox { grid-column: 1 / -1; margin-top: 10px; }
+@media (max-width: 860px) {
+  /* Same 5 visible cells as desktop minus Owner (checkbox, dog, due, status,
+     actions) - the track list must list all 5 or the last one (actions)
+     silently loses its slot again. */
+  .pd-trow { grid-template-columns: 28px 1.6fr 1fr 1fr 140px; }
+  .pd-tcell-owner, .pd-thead-owner { display: none; }
+}
+@media (max-width: 620px) {
+  .pd-trow { grid-template-columns: 24px 1.4fr 1fr 116px; }
+  .pd-tcell-due-col, .pd-thead-due { display: none; }
+  .pd-main { padding: 16px 14px 40px; }
+  .pd-sidebar { width: 56px; }
+  /* Smaller buttons so 4 actions still fit comfortably on a phone-width row. */
+  .pd-row-action { width: 24px; height: 24px; }
+  .pd-tcell-actions { gap: 2px; }
+}
+
+/* --- Bulk action bar --- */
+.pd-bulkbar {
+  display: flex; align-items: center; justify-content: space-between; background: var(--ink); color: var(--bg);
+  border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; font-size: .85rem; gap: 10px; flex-wrap: wrap;
+}
+.pd-bulkbar-actions { display: flex; gap: 8px; }
+.pd-bulkbar button { padding: 7px 12px; font-size: .8rem; }
+
+/* --- Modal (add/edit dog) --- */
+.pd-modal-overlay {
+  position: fixed; inset: 0; background: rgba(23,37,43,.45); display: flex; align-items: flex-start;
+  justify-content: center; padding: 40px 16px; z-index: 200; overflow-y: auto;
+}
+.pd-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 560px; padding: 22px 24px 24px; }
+.pd-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.pd-modal-head h2 { margin: 0; font-size: 1.15rem; }
+.pd-modal-close { background: none; border: none; color: var(--sub); cursor: pointer; padding: 4px; display: flex; }
+.pd-modal-close:hover { color: var(--ink); }
+.pd-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.pd-form-hint { font-size: .78rem; color: var(--sub); margin: -6px 0 14px; line-height: 1.5; }
+
+/* --- Setup warnings banner --- */
+.pd-setup-banner { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.pd-setup-issue {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  border-radius: 10px; padding: 10px 14px; font-size: .84rem; line-height: 1.5;
+}
+.pd-setup-high { background: rgba(214,85,47,.09); border: 1px solid rgba(214,85,47,.3); color: var(--ink); }
+.pd-setup-medium { background: rgba(232,176,75,.14); border: 1px solid rgba(232,176,75,.4); color: var(--ink); }
+.pd-setup-issue button { background: none; border: none; color: var(--sub); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 2px; }
+.pd-setup-issue button:hover { color: var(--ink); }
+
+/* --- Empty state --- */
+.pd-tempty { text-align: center; color: var(--sub); padding: 46px 16px; font-size: .9rem; }
+
+
+.toast-stack {
+  position: fixed; top: 18px; right: 18px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+}
+.toast {
+  background: var(--ink); color: var(--bg); font-size: .85rem; font-weight: 600;
+  padding: 10px 16px; border-radius: 9px; box-shadow: 0 6px 18px rgba(0,0,0,.15);
+  animation: toast-in .25s ease-out;
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---------- Blinking "needs attention" indicators ---------- */
+.dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--overdue); margin-right: 6px; vertical-align: middle;
+}
+.dot.blink, .notif-dot.blink { animation: blink-pulse 1.4s ease-in-out infinite; }
+@keyframes blink-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(201,80,63,.5); }
+  50% { opacity: .55; box-shadow: 0 0 0 5px rgba(201,80,63,0); }
+}
+@media (prefers-reduced-motion: reduce) { .dot.blink, .notif-dot.blink, .blink-num { animation: none; } }
+.blink-num { animation: blink-pulse 1.4s ease-in-out infinite; display: inline-block; }
+
+.dog { border-left: 3px solid transparent; transition: box-shadow .15s ease; }
+.dog-overdue { border-left-color: var(--overdue); }
+.dog-soon { border-left-color: var(--warn); }
+.dog-ok { border-left-color: var(--ok); }
+.dog:hover { box-shadow: 0 3px 14px rgba(0,0,0,.06); }
+.dog-busy { opacity: .6; pointer-events: none; }
+
+/* ---------- Notification bell ---------- */
+.notif-wrap { position: relative; }
+.notif-bell {
+  background: transparent; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 10px; font-size: 1rem; position: relative; color: var(--ink);
+}
+.notif-count {
+  position: absolute; top: -6px; right: -6px; background: var(--overdue); color: #fff;
+  font-size: .65rem; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+.notif-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px); width: 280px; max-height: 320px;
+  overflow-y: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12); z-index: 50; padding: 8px;
+}
+.notif-head { font-size: .78rem; font-weight: 700; color: var(--sub); padding: 6px 8px; }
+.notif-empty { font-size: .85rem; color: var(--sub); padding: 14px 8px; text-align: center; }
+.notif-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; }
+.notif-item:hover { background: var(--bg); }
+.notif-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.notif-item-text { flex: 1; display: flex; flex-direction: column; font-size: .82rem; }
+.notif-item-text span { color: var(--sub); font-size: .74rem; }
+.notif-quick { font-size: .72rem; padding: 5px 8px; border-radius: 7px; }
+
+/* ---------- Toolbar (search + filters) ---------- */
+.toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.search-input {
+  flex: 1; min-width: 180px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); font-size: .88rem;
+}
+
+/* ---------- Skeleton loading ---------- */
+.skeleton-card {
+  height: 84px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--line);
+  background: linear-gradient(90deg, var(--card) 25%, var(--bg) 37%, var(--card) 63%);
+  background-size: 400% 100%; animation: skeleton-shimmer 1.4s ease infinite;
+}
+@keyframes skeleton-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .skeleton-card { animation: none; } }
+
+/* ---------- Edit mode, notes, tags, view tabs ---------- */
+.edit-form { display: grid; gap: 10px; }
+.dognotes { font-size: .8rem; color: var(--sub); margin-top: 6px; background: var(--bg); border-radius: 6px; padding: 6px 9px; }
+.tag-muted, .tag-ok, .tag-fail {
+  display: inline-block; margin-left: 8px; font-size: .74rem; padding: 1px 7px; border-radius: 10px;
+}
+.tag-muted { background: rgba(0,0,0,.06); color: var(--sub); }
+.tag-ok { color: var(--ok); }
+.tag-fail { color: var(--overdue); }
+.view-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.dash-header { display: flex; justify-content: space-between; align-items: center; }
+.dash-header-actions { display: flex; gap: 10px; align-items: center; }
+
+/* ============================================================
+   Mobile responsiveness pass - the app pages (dashboard, forms,
+   auth) had no breakpoints below this point; phones need stacked
+   fields, wrapped toolbars, larger tap targets, and a
+   notification dropdown that doesn't overflow the viewport.
+   ============================================================ */
+@media (max-width: 640px) {
+  .wrap { padding: 14px 12px 40px; }
+  .row2 { grid-template-columns: 1fr; }
+  .stats { flex-direction: column; }
+  .dash-header { flex-wrap: wrap; gap: 10px; }
+  .dash-header-actions { display: flex; gap: 8px; align-items: center; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar .actions { flex-wrap: wrap; }
+  .notif-dropdown { position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
+  .usage-bar { flex-direction: column; align-items: flex-start; }
+  .dogtop { flex-direction: column; gap: 8px; }
+  .dogtop .badge { align-self: flex-start; }
+  .actions button, .toolbar .actions button { min-height: 38px; }
+  button { min-height: 40px; }
+  input, select { font-size: 16px; } /* prevents iOS auto-zoom on focus */
+  .view-tabs { flex-wrap: wrap; }
+}
