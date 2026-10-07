@@ -558,6 +558,33 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 }
 .pd-sidebar-bottom { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 
+/* --- Mobile bottom nav: replaces the sidebar entirely below the
+   breakpoint, rather than just shrinking it. A 56px vertical rail still
+   eats a meaningful slice of a 360-430px phone screen on every single
+   view; a bottom bar doesn't cost any horizontal space at all. --- */
+.pd-bottomnav { display: none; }
+@media (max-width: 700px) {
+  .pd-sidebar { display: none; }
+  .pd-bottomnav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 150;
+    background: var(--card); border-top: 1px solid var(--line);
+    padding: 6px 2px calc(6px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+  }
+  .pd-bottomnav-btn {
+    background: none; border: none; color: var(--sub); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px; font-size: .62rem; font-weight: 700;
+    padding: 6px 2px; border-radius: 10px; position: relative; flex: 1; min-width: 0;
+  }
+  .pd-bottomnav-btn.active { color: var(--accent); }
+  .pd-bottomnav-label { line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .pd-bottomnav-badge {
+    position: absolute; top: -1px; right: 14%; background: var(--overdue); color: #fff;
+    font-size: .58rem; font-weight: 700; min-width: 14px; height: 14px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; padding: 0 3px;
+  }
+}
+
 /* No max-width cap here on purpose: this is a data table, and on a wide
    monitor capping it without centering left a large dead gray strip on the
    right instead of the content using the space it has. */
@@ -582,11 +609,12 @@ button.small { padding: 6px 10px; font-size: .78rem; }
   position: absolute; right: 0; top: calc(100% + 8px); width: 200px; background: var(--card);
   border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.12); z-index: 60; padding: 8px;
 }
-.pd-profile-dropdown button {
+.pd-profile-dropdown button, .pd-profile-dropdown a {
   width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--ink);
   padding: 9px 10px; font-size: .85rem; font-weight: 600; border-radius: 8px; cursor: pointer; text-align: left;
+  text-decoration: none; box-sizing: border-box;
 }
-.pd-profile-dropdown button:hover { background: var(--bg); }
+.pd-profile-dropdown button:hover, .pd-profile-dropdown a:hover { background: var(--bg); }
 .pd-danger-item { color: var(--overdue) !important; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px !important; }
 .pd-danger-btn { background: var(--overdue); color: #fff; border: none; }
 .pd-danger-btn:hover { opacity: .9; }
@@ -682,6 +710,10 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .pd-select-wrap { position: relative; }
 .pd-select-wrap svg { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--sub); }
 .pd-groupby { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+@media (max-width: 480px) {
+  .pd-searchbox { min-width: 100%; }
+  .pd-groupby { margin-left: 0; }
+}
 .pd-groupby-label { font-size: .8rem; color: var(--sub); }
 .pd-segmented { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 100px; padding: 3px; }
 .pd-segmented button { border: none; background: none; padding: 6px 14px; border-radius: 100px; font-size: .8rem; font-weight: 700; color: var(--sub); cursor: pointer; }
@@ -739,11 +771,16 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 @media (max-width: 620px) {
   .pd-trow { grid-template-columns: 24px 1.4fr 1fr 116px; }
   .pd-tcell-due-col, .pd-thead-due { display: none; }
-  .pd-main { padding: 16px 14px 40px; }
-  .pd-sidebar { width: 56px; }
   /* Smaller buttons so 4 actions still fit comfortably on a phone-width row. */
   .pd-row-action { width: 24px; height: 24px; }
   .pd-tcell-actions { gap: 2px; }
+}
+/* Bottom padding big enough to clear the fixed .pd-bottomnav (its own
+   height + the safe-area inset on notched phones), applied at the same
+   breakpoint the bottom nav itself appears at - not 620px, or content
+   would sit flush against the bar for a while before the padding kicks in. */
+@media (max-width: 700px) {
+  .pd-main { padding: 16px 14px calc(84px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* --- Bulk action bar --- */

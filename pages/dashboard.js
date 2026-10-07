@@ -527,13 +527,16 @@ export default function Dashboard({ userId, userEmail }) {
   const visibleIds = filtered.map((x) => x.dog.id);
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
+  // shortLabel is what the mobile bottom nav renders - 6 destinations is
+  // already a lot for a phone-width bar, so each gets a tighter word
+  // ("Hours" instead of "Availability") rather than wrapping or truncating.
   const NAV_ITEMS = [
-    { key: "dogs", label: "Dogs", icon: IconHome, badge: needsAttention.length },
-    { key: "analytics", label: "Analytics", icon: IconChart },
-    { key: "bookings", label: "Bookings", icon: IconCalendar, badge: bookings.length },
-    { key: "availability", label: "Availability", icon: IconClock },
-    { key: "archived", label: "Archived", icon: IconInbox },
-    { key: "billing", label: "Billing", icon: IconCard },
+    { key: "dogs", label: "Dogs", shortLabel: "Dogs", icon: IconHome, badge: needsAttention.length },
+    { key: "analytics", label: "Analytics", shortLabel: "Stats", icon: IconChart },
+    { key: "bookings", label: "Bookings", shortLabel: "Bookings", icon: IconCalendar, badge: bookings.length },
+    { key: "availability", label: "Availability", shortLabel: "Hours", icon: IconClock },
+    { key: "archived", label: "Archived", shortLabel: "Archive", icon: IconInbox },
+    { key: "billing", label: "Billing", shortLabel: "Billing", icon: IconCard },
   ];
 
   const VIEW_TITLE = {
@@ -586,6 +589,25 @@ export default function Dashboard({ userId, userEmail }) {
         </div>
       </aside>
 
+      {/* ---------- Mobile bottom nav (replaces the sidebar below the
+          breakpoint - see .pd-bottomnav / .pd-sidebar in globals.css).
+          Renders the same NAV_ITEMS so the two stay in sync automatically;
+          CSS alone decides which one is actually visible. ---------- */}
+      <nav className="pd-bottomnav">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.key}
+            className={`pd-bottomnav-btn ${activeView === item.key ? "active" : ""}`}
+            onClick={() => setActiveView(item.key)}
+            aria-label={item.label}
+          >
+            <item.icon width={20} height={20} />
+            {!!item.badge && <span className="pd-bottomnav-badge">{item.badge}</span>}
+            <span className="pd-bottomnav-label">{item.shortLabel}</span>
+          </button>
+        ))}
+      </nav>
+
       {/* ---------- Main ---------- */}
       <main className="pd-main">
         <div className="pd-topbar">
@@ -631,6 +653,7 @@ export default function Dashboard({ userId, userEmail }) {
               {profileOpen && (
                 <div className="pd-profile-dropdown">
                   <button onClick={() => setActiveView("billing")}><IconCard /> Billing</button>
+                  <Link href="/help" onClick={() => setProfileOpen(false)}><IconHelp /> Help</Link>
                   <button onClick={handleSignOut}><IconLogout /> Log out</button>
                   <button onClick={() => { setProfileOpen(false); setDeleteModalOpen(true); }} className="pd-danger-item">
                     <IconTrash /> Delete account
