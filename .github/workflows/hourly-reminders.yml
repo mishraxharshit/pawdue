@@ -1,0 +1,27 @@
+# Calls the reminder endpoint once an hour.
+#
+# Why this exists: Vercel's free (Hobby) plan only allows a cron job once
+# per DAY, but sending each groomer's reminders at a sensible LOCAL hour
+# (see REMINDER_SEND_HOUR in .env.example) needs an hourly trigger.
+# GitHub Actions can do that for free.
+#
+# Needs two repository secrets (GitHub repo > Settings > Secrets and
+# variables > Actions > New repository secret):
+#   APP_URL      your live site, no trailing slash, e.g. https://pawdue.pet
+#   CRON_SECRET  the same value as CRON_SECRET in Vercel
+name: Hourly reminder check
+
+on:
+  schedule:
+    - cron: "5 * * * *"   # minute 5 of every hour (UTC)
+  workflow_dispatch: {}    # also lets you run it by hand from the Actions tab
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/send-reminders
+        run: |
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/send-reminders"
