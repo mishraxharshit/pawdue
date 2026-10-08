@@ -27,7 +27,7 @@ export default function SiteFooter() {
             <div className="pd-sitefooter-heading">Support</div>
             <Link href="/help">Help center</Link>
             <Link href="/feedback">Send feedback</Link>
-            <a href="mailto:hello@pawdue.app">hello@pawdue.app</a>
+            <a href="mailto:hello@pawdue.pet">hello@pawdue.pet</a>
           </div>
 
           <div className="pd-sitefooter-col">

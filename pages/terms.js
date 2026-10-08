@@ -61,7 +61,7 @@ export default function Terms() {
           <h2>Contact</h2>
           <p>
             Questions about these terms can be sent to{" "}
-            <a href="mailto:hello@pawdue.app">hello@pawdue.app</a>.
+            <a href="mailto:hello@pawdue.pet">hello@pawdue.pet</a>.
           </p>
         </div>
       </div>
