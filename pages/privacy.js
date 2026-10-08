@@ -55,7 +55,7 @@ export default function Privacy() {
           <h2>Questions</h2>
           <p>
             For anything not covered here, reach out any time at{" "}
-            <a href="mailto:hello@pawdue.pet">hello@pawdue.pet</a> or through the{" "}
+            <a href="mailto:hello@pawdue.app">hello@pawdue.app</a> or through the{" "}
             <a href="/feedback">feedback page</a>.
           </p>
         </div>

@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { computeStatus, reminderMessage, reminderSubject } from "../../../lib/breedIntervals";
 import { sendReminderMessage, sendEmail } from "../../../lib/messaging";
+import { localHour } from "../../../lib/localTime";
 
 // How many days must pass before we re-send a reminder for the same dog,
 // so people aren't texted every single day while overdue.
@@ -32,6 +33,17 @@ export default async function handler(req, res) {
 
   const supabase = createSupabaseAdminClient();
   const now = new Date();
+
+  // Optional per-timezone sending. When REMINDER_SEND_HOUR is set (0-23),
+  // this job is meant to run HOURLY, and a dog's reminder only goes out
+  // during the hour that is that local hour for its groomer's timezone -
+  // so "9" means 9 AM for everyone, wherever they are. When it's not set,
+  // every run sends to every due dog (the original once-a-day behavior).
+  // ?force=1 skips the hour check, for manual testing with curl.
+  const rawSendHour = process.env.REMINDER_SEND_HOUR;
+  const parsedSendHour = rawSendHour ? Number(rawSendHour) : null;
+  const sendHourValid = Number.isInteger(parsedSendHour) && parsedSendHour >= 0 && parsedSendHour <= 23;
+  const gateByHour = sendHourValid && req.query.force !== "1";
 
   try {
     // Service-role client bypasses RLS on purpose here - this job needs to
@@ -70,7 +82,17 @@ export default async function handler(req, res) {
       .gte("slot_at", now.toISOString());
     const dogIdsWithUpcomingBooking = new Set((upcomingBookings || []).map((b) => b.dog_id));
 
-    const results = { sent: 0, skipped: 0, failed: 0, details: [] };
+    const results = {
+      sent: 0,
+      skipped: 0,
+      failed: 0,
+      notSendHour: 0,
+      mode: gateByHour ? `hourly (sending at ${parsedSendHour}:00 local time)` : "send to all due dogs",
+      details: [],
+    };
+    if (rawSendHour && !sendHourValid) {
+      results.warning = `REMINDER_SEND_HOUR="${rawSendHour}" is not a whole number from 0 to 23 - ignoring it.`;
+    }
 
     for (const dog of dogs) {
       if (dog.opted_out) {
@@ -84,6 +106,12 @@ export default async function handler(req, res) {
       }
 
       const timezone = timezoneByUser.get(dog.user_id) || "UTC";
+
+      if (gateByHour && localHour(now, timezone) !== parsedSendHour) {
+        results.notSendHour++;
+        continue;
+      }
+
       const comp = computeStatus(dog, now, timezone);
 
       if (comp.status === "ok") {

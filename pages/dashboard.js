@@ -115,8 +115,15 @@ export default function Dashboard({ userId, userEmail }) {
   }
 
   async function loadDogs() {
-    const res = await fetch("/api/dogs");
-    if (res.ok) setDogs(await res.json());
+    // no-store: never let the browser answer this from a cached copy.
+    const res = await fetch("/api/dogs", { cache: "no-store" });
+    if (res.ok) {
+      setDogs(await res.json());
+    } else {
+      // Used to fail silently, which makes "my list didn't update" nearly
+      // impossible to diagnose. Now it at least shows up in the console.
+      console.error("loadDogs failed with status", res.status);
+    }
     setIsLoading(false);
   }
 
@@ -339,9 +346,13 @@ export default function Dashboard({ userId, userEmail }) {
         setModalSaving(false);
         return;
       }
+      // The POST already returns the full saved row (including values the
+      // server sets itself, like booking_token), so put it straight into the
+      // list instead of depending on a second request to fetch it back.
+      const created = await res.json();
+      setDogs((prev) => (prev.some((d) => d.id === created.id) ? prev : [...prev, created]));
       showToast(`${form.dogName} added ✓`);
       closeModal();
-      loadDogs();
       loadBilling();
     } else {
       const res = await fetch(`/api/dogs/${editingDog.id}`, {

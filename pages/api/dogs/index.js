@@ -20,6 +20,8 @@ export default async function handler(req, res) {
 
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
+    // This list changes the moment a dog is added/edited - never cache it.
+    res.setHeader("Cache-Control", "no-store");
     return res.status(200).json(data);
   }
 
