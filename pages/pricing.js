@@ -104,7 +104,7 @@ export default function Pricing({ isLoggedIn }) {
             <div className="pd-price-card pd-price-highlight">
               <div className="pd-price-ribbon">Most popular</div>
               <div className="pd-price-name">Starter</div>
-              <div className="pd-price-amount">$29 <span>/mo</span></div>
+              <div className="pd-price-amount">$49 <span>/mo</span></div>
               <p className="pd-price-sub">For most solo groomers.</p>
               <ul className="pd-price-feats">
                 <li>Up to 75 dogs</li>
@@ -120,7 +120,7 @@ export default function Pricing({ isLoggedIn }) {
 
             <div className="pd-price-card">
               <div className="pd-price-name">Pro</div>
-              <div className="pd-price-amount">$49 <span>/mo</span></div>
+              <div className="pd-price-amount">$99 <span>/mo</span></div>
               <p className="pd-price-sub">For busy or multi-location groomers.</p>
               <ul className="pd-price-feats">
                 <li>Unlimited dogs</li>
