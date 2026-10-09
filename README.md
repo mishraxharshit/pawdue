@@ -115,15 +115,15 @@ each channel's credentials in order every time.
 
 ## 5. Set up Dodo Payments billing
 
-PawDue has three plans: Free (10 dogs), Starter ($29/mo, 75 dogs), Pro ($49/mo, unlimited).
+PawDue has three plans: Free (10 dogs), Starter ($49/mo, 75 dogs), Pro ($99/mo, unlimited).
 Dodo Payments is a merchant-of-record processor (handles global tax/compliance for you),
 good for a solo founder selling worldwide.
 
 1. Create a Dodo Payments account at https://app.dodopayments.com (stay in **test mode**
    while developing — set `DODO_PAYMENTS_ENVIRONMENT="test_mode"`)
 2. Create two **subscription products**:
-   - "PawDue Starter" — recurring, $29.00/month
-   - "PawDue Pro" — recurring, $49.00/month
+   - "PawDue Starter" — recurring, $49.00/month
+   - "PawDue Pro" — recurring, $99.00/month
 3. Copy each product's **Product ID** (starts with `pdt_...`) into `DODO_STARTER_PRODUCT_ID`
    and `DODO_PRO_PRODUCT_ID` in `.env`
 4. Go to **Developer → API**, copy your API key into `DODO_PAYMENTS_API_KEY`
