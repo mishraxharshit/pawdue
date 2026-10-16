@@ -52,7 +52,12 @@ export default function Pricing({ isLoggedIn }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        throw new Error(`Could not start checkout (server error ${res.status}). Check the Vercel logs.`);
+      }
       if (!res.ok) throw new Error(data.error || "Could not start checkout");
       window.location.href = data.url;
     } catch (err) {
