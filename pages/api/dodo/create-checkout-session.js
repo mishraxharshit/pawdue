@@ -16,18 +16,43 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Unknown or unconfigured plan" });
   }
 
-  const dodo = getDodo();
-  const origin = req.headers.origin || `https://${req.headers.host}`;
+  try {
+    const dodo = getDodo();
+    const origin = req.headers.origin || `https://${req.headers.host}`;
 
-  // We don't pre-create a Dodo customer - passing email/name lets Dodo attach
-  // (or create) the customer itself. The webhook links it back to this user
-  // via the metadata below, and stores the resulting customer_id for us.
-  const session = await dodo.checkoutSessions.create({
-    product_cart: [{ product_id: productId, quantity: 1 }],
-    customer: { email: user.email, name: user.email },
-    return_url: `${origin}/dashboard?upgraded=1`,
-    metadata: { supabase_user_id: user.id, plan },
-  });
+    // We don't pre-create a Dodo customer - passing email/name lets Dodo attach
+    // (or create) the customer itself. The webhook links it back to this user
+    // via the metadata below, and stores the resulting customer_id for us.
+    const session = await dodo.checkoutSessions.create({
+      product_cart: [{ product_id: productId, quantity: 1 }],
+      customer: { email: user.email, name: user.email },
+      return_url: `${origin}/dashboard?upgraded=1`,
+      metadata: { supabase_user_id: user.id, plan },
+    });
 
-  return res.status(200).json({ url: session.checkout_url });
+    return res.status(200).json({ url: session.checkout_url });
+  } catch (err) {
+    // Always answer with JSON, never Next's HTML 500 page - the browser
+    // would otherwise fail with "Unexpected token '<'" and hide the cause.
+    const status = err?.status || err?.statusCode;
+    const detail = err?.error?.message || err?.message || "Unknown error";
+    console.error("Dodo checkout failed", {
+      status,
+      detail,
+      env: process.env.DODO_PAYMENTS_ENVIRONMENT || "test_mode",
+      plan,
+      productId,
+    });
+    let hint = "";
+    if (/DODO_PAYMENTS_API_KEY/.test(detail)) {
+      hint = " Set DODO_PAYMENTS_API_KEY in Vercel and redeploy.";
+    } else if (status === 401 || status === 403) {
+      hint =
+        " Dodo rejected the API key. Check the key matches DODO_PAYMENTS_ENVIRONMENT (test key with test_mode, live key with live_mode).";
+    } else if (status === 404 || status === 422) {
+      hint =
+        " Check the Product ID exists in the same mode (test/live) as your API key and is a subscription product.";
+    }
+    return res.status(500).json({ error: `Checkout failed: ${detail}.${hint}` });
+  }
 }

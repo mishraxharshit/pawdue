@@ -22,8 +22,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "No billing account yet - subscribe to a plan first" });
   }
 
-  const dodo = getDodo();
-  const portalSession = await dodo.customers.customerPortal.create(data.dodo_customer_id);
-
-  return res.status(200).json({ url: portalSession.link });
+  try {
+    const dodo = getDodo();
+    const portalSession = await dodo.customers.customerPortal.create(data.dodo_customer_id);
+    return res.status(200).json({ url: portalSession.link });
+  } catch (err) {
+    console.error("Dodo portal failed", err?.message);
+    return res.status(500).json({ error: `Could not open billing portal: ${err?.message || "unknown error"}` });
+  }
 }
