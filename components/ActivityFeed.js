@@ -39,7 +39,7 @@ export default function ActivityFeed({ dogs, bookings }) {
         <span className="pd-chart-sub pd-live-dot">live</span>
       </div>
       {events.length === 0 ? (
-        <div className="pd-tempty" style={{ padding: "20px 0" }}>Nothing yet — activity shows up here as reminders send and bookings come in.</div>
+        <div className="pd-tempty" style={{ padding: "20px 0" }}>Nothing yetactivity shows up here as reminders send and bookings come in.</div>
       ) : (
         <div className="pd-activity-list">
           {events.map((e, i) => (

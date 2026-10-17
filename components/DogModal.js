@@ -88,7 +88,7 @@ export default function DogModal({ mode, initialValues, knownOwners, saving, err
           </div>
           <p className="pd-form-hint">
             Reminders send by email today. WhatsApp and SMS kick in automatically as backup
-            channels the moment they&apos;re connected &mdash; the phone number above is ready for that.
+            channels the moment they&apos;re connected. The phone number above is ready for that.
           </p>
 
           {error && (

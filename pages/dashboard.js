@@ -856,7 +856,7 @@ export default function Dashboard({ userId, userEmail }) {
         {activeView === "bookings" && (
           <div className="pd-table">
             {bookings.length === 0 ? (
-              <div className="pd-tempty">No upcoming bookings yet — they&apos;ll show up here the moment an owner books through their reminder link.</div>
+              <div className="pd-tempty">No upcoming bookings yetthey&apos;ll show up here the moment an owner books through their reminder link.</div>
             ) : (
               <>
                 <div className="pd-trow pd-thead" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1fr" }}>
@@ -1036,7 +1036,7 @@ export default function Dashboard({ userId, userEmail }) {
             <h3 style={{ margin: "0 0 6px", fontSize: "1rem" }}>Timezone</h3>
             <p className="sub" style={{ margin: "0 0 14px" }}>
               Used to decide each dog&apos;s local &ldquo;day&rdquo; for due dates and when the
-              daily reminder job runs for your account &mdash; not just the server&apos;s timezone.
+              daily reminder job runs for your account, not just the server&apos;s timezone.
             </p>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <select
@@ -1108,8 +1108,8 @@ export default function Dashboard({ userId, userEmail }) {
               </button>
             </div>
             <p style={{ fontSize: ".88rem", color: "var(--sub)", lineHeight: 1.55 }}>
-              This permanently deletes your account, every dog, booking, and setting &mdash;
-              there&apos;s no undo. Type <b>DELETE</b> below to confirm.
+              This permanently deletes your account, every dog, booking, and setting.
+              There&apos;s no undo. Type <b>DELETE</b> below to confirm.
             </p>
             <input
               value={deleteConfirmText}

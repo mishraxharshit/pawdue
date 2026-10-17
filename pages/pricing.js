@@ -22,15 +22,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens if I go over my dog limit?",
-    a: "You'll get a heads-up in your dashboard before you hit the ceiling, and existing dogs keep getting reminders either way — you just won't be able to add new ones until you upgrade or remove one.",
+    a: "You'll get a heads-up in your dashboard before you hit the ceiling, and existing dogs keep getting reminders either wayyou just won't be able to add new ones until you upgrade or remove one.",
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Cancel from your dashboard whenever you like — there's no long-term contract, and you keep access until the end of the billing period you already paid for.",
+    a: "Yes. Cancel from your dashboard whenever you likethere's no long-term contract, and you keep access until the end of the billing period you already paid for.",
   },
   {
     q: "Which reminder channels are included?",
-    a: "Every plan sends by email today, since that works instantly with no approval wait. WhatsApp and SMS are optional backup channels you can connect any time — once added, they slot into the send order automatically. No per-message fees on any plan.",
+    a: "Every plan sends by email today, since that works instantly with no approval wait. WhatsApp and SMS are optional backup channels you can connect any timeonce added, they slot into the send order automatically. No per-message fees on any plan.",
   },
 ];
 
@@ -142,7 +142,7 @@ export default function Pricing({ isLoggedIn }) {
           </div>
 
           <p className="sub" style={{ marginTop: 20, textAlign: "center" }}>
-            Prices in USD. Cancel anytime from your dashboard — no long-term contract.
+            Prices in USD. Cancel anytime from your dashboardno long-term contract.
           </p>
         </div>
 
@@ -188,14 +188,14 @@ export default function Pricing({ isLoggedIn }) {
             </div>
             <div className="pd-pc-row">
               <div>Priority message delivery</div>
-              <div>—</div>
+              <div></div>
               <div>✓</div>
               <div>✓</div>
             </div>
             <div className="pd-pc-row">
               <div>Custom reminder timing</div>
-              <div>—</div>
-              <div>—</div>
+              <div></div>
+              <div></div>
               <div>Coming soon</div>
             </div>
           </div>

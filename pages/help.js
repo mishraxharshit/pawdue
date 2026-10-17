@@ -13,19 +13,19 @@ const TOPICS = [
 
 const FAQ_ITEMS = [
   {
-    q: "A reminder didn't go out — what happened?",
-    a: "PawDue sends by email first — it needs no approval and works immediately. WhatsApp and SMS are optional backups you can connect any time; once added, they're used automatically if email fails. Check your dashboard for a delivery note on any dog, or reach out via the feedback page.",
+    q: "A reminder didn't go outwhat happened?",
+    a: "PawDue sends by email firstit needs no approval and works immediately. WhatsApp and SMS are optional backups you can connect any time; once added, they're used automatically if email fails. Check your dashboard for a delivery note on any dog, or reach out via the feedback page.",
   },
   {
     q: "Can I add a dog manually with a custom interval instead of the breed default?",
-    a: "Yes — when adding or editing a dog you can set your own interval in weeks instead of using the breed's typical default.",
+    a: "Yeswhen adding or editing a dog you can set your own interval in weeks instead of using the breed's typical default.",
   },
   {
     q: "How do I stop reminders for one dog without deleting it?",
-    a: "Use the opt-out option on that dog's record — it keeps the dog's history but stops future reminders from going out.",
+    a: "Use the opt-out option on that dog's recordit keeps the dog's history but stops future reminders from going out.",
   },
   {
-    q: "I found a bug or have a feature request — where does it go?",
+    q: "I found a bug or have a feature requestwhere does it go?",
     a: "The feedback page goes straight to the team and is the fastest way to report something or suggest an improvement.",
   },
 ];
