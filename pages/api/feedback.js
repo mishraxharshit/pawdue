@@ -33,12 +33,12 @@ export default async function handler(req, res) {
       from: process.env.REMINDER_FROM_EMAIL || "onboarding@resend.dev",
       to: feedbackTo,
       reply_to: email || undefined,
-      subject: `PawDue feedback${category ? ` — ${category}` : ""}`,
+      subject: `PawDue feedback${category ? `${category}` : ""}`,
       text: `From: ${name || "Anonymous"} <${email || "no email given"}>\nCategory: ${category || "General"}\n\n${message}`,
     });
     return res.status(200).json({ ok: true, delivered: true });
   } catch (err) {
     console.error("[feedback] failed to send", err);
-    return res.status(500).json({ error: "Couldn't send that just now — please try again shortly." });
+    return res.status(500).json({ error: "Couldn't send that just nowplease try again shortly." });
   }
 }

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 
 const PROMPT_COPY = {
-  hi: { text: "लगता है आप भारत से ब्राउज़ कर रहे हैं — हिन्दी में बदलें?", switch: "हिन्दी में बदलें", no: "नहीं, रहने दें" },
-  es: { text: "Parece que estás navegando desde un país de habla hispana — ¿cambiar a Español?", switch: "Cambiar a Español", no: "No, gracias" },
+  hi: { text: "लगता है आप भारत से ब्राउज़ कर रहे हैंहिन्दी में बदलें?", switch: "हिन्दी में बदलें", no: "नहीं, रहने दें" },
+  es: { text: "Parece que estás navegando desde un país de habla hispana¿cambiar a Español?", switch: "Cambiar a Español", no: "No, gracias" },
 };
 
 function readCookie(name) {

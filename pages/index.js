@@ -5,7 +5,9 @@ import SiteFooter from "../components/SiteFooter";
 import DueDateCalculator from "../components/DueDateCalculator";
 import ComparisonTable from "../components/ComparisonTable";
 import HeroPreview from "../components/HeroPreview";
-import Testimonials from "../components/Testimonials";
+import ProblemSection from "../components/ProblemSection";
+import Reveal from "../components/Reveal";
+import ProductTour from "../components/ProductTour";
 import Faq from "../components/Faq";
 import { IconCheck, IconCalendar, IconMessage, IconInbox, IconLink, IconEnvelope } from "../components/icons";
 
@@ -84,7 +86,7 @@ export default function Landing() {
             <h1 className="pd-display">Stop losing rebookings because nobody remembered to ask.</h1>
             <p>
               PawDue tracks every dog&apos;s breed-specific grooming cycle and messages
-              the owner the moment they&apos;re due for a rebook &mdash; automatically,
+              the owner the moment they&apos;re due for a rebook, automatically,
               by email, with WhatsApp and SMS as automatic backups.
             </p>
             <div className="pd-cta-row">
@@ -118,6 +120,20 @@ export default function Landing() {
       </div>
 
       <div className="pd-shell">
+        {/* ---------- Problem: the why, before the what ---------- */}
+        <div className="pd-band">
+          <ProblemSection />
+        </div>
+
+        {/* ---------- Whole journey, animated ---------- */}
+        <div className="pd-band pd-band-tint">
+          <div className="pd-section-head pd-center">
+            <div className="pd-eyebrow">The whole journey</div>
+            <h2 className="pd-display">From sign-up to a booked groom, in seven steps</h2>
+          </div>
+          <ProductTour />
+        </div>
+
         {/* ---------- Features ---------- */}
         <div className="pd-band">
           <div className="pd-section-head pd-center">
@@ -125,12 +141,12 @@ export default function Landing() {
             <h2 className="pd-display">Everything after &ldquo;log the groom&rdquo; happens on its own</h2>
           </div>
           <div className="pd-feature-grid">
-            {FEATURES.map((f) => (
-              <div className="pd-feature-card" key={f.title}>
+            {FEATURES.map((f, i) => (
+              <Reveal className="pd-feature-card" delay={i * 90} key={f.title}>
                 <div className={`pd-icon-badge ${f.tone}`}><f.icon width={22} height={22} /></div>
                 <h3>{f.title}</h3>
                 <p>{f.body}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
 
@@ -159,7 +175,7 @@ export default function Landing() {
           </div>
           <p className="pd-flow-caption">
             Email works out of the box, no approval wait. Connect WhatsApp or SMS whenever
-            you&apos;re ready and they slot in automatically &mdash; on every plan.
+            you&apos;re ready and they slot in automatically, on every plan.
           </p>
         </div>
 
@@ -169,7 +185,7 @@ export default function Landing() {
           <div className="pd-section-head pd-center">
             <div className="pd-eyebrow">See it work</div>
             <h2 className="pd-display">A real due date, calculated right now</h2>
-            <p>Pick a breed and a last-groom date &mdash; this is the exact math PawDue runs for every dog, every day.</p>
+            <p>Pick a breed and a last-groom date. This is the exact math PawDue runs for every dog, every day.</p>
           </div>
           <DueDateCalculator />
         </div>
@@ -210,18 +226,9 @@ export default function Landing() {
           </div>
           <ComparisonTable />
           <div className="pd-midcta">
-            <Link className="pd-btn pd-btn-primary" href="/register">Start free &mdash; takes 2 minutes</Link>
+            <Link className="pd-btn pd-btn-primary" href="/register">Start free in 2 minutes</Link>
             <p className="pd-midcta-note">Up to 10 dogs on the house. No card required.</p>
           </div>
-        </div>
-
-        {/* ---------- Social proof ---------- */}
-        <div className="pd-band">
-          <div className="pd-section-head pd-center">
-            <div className="pd-eyebrow">From groomers</div>
-            <h2 className="pd-display">What changes day to day</h2>
-          </div>
-          <Testimonials />
         </div>
 
         {/* ---------- FAQ: objection handling right before the final ask. ---------- */}

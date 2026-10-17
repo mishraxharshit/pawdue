@@ -39,13 +39,13 @@ export default function Feedback() {
           <div className="pd-section-head pd-center">
             <div className="pd-eyebrow">Feedback</div>
             <h1 className="pd-display">Tell us what's working (or not)</h1>
-            <p>Bug reports, feature requests, or just a thought — it goes straight to the team.</p>
+            <p>Bug reports, feature requests, or just a thoughtit goes straight to the team.</p>
           </div>
 
           {status === "sent" ? (
             <div className="pd-feedback-success">
               <div className="pd-icon-badge teal" style={{ width: 56, height: 56, fontSize: "1.6rem" }}>🐾</div>
-              <h2 className="pd-display">Thanks — got it.</h2>
+              <h2 className="pd-display">Thanksgot it.</h2>
               <p style={{ color: "var(--pd-ink-soft)" }}>We read every message. If you left an email, we'll follow up there.</p>
             </div>
           ) : (

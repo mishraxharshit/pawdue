@@ -20,7 +20,7 @@ export default function Terms() {
           <p>
             You&apos;re responsible for the accuracy of the dog and owner information you add,
             and for keeping your login credentials secure. You must have a lawful basis for
-            messaging the owners you add — typically that they&apos;re your existing clients.
+            messaging the owners you addtypically that they&apos;re your existing clients.
           </p>
 
           <h2>Plans and billing</h2>

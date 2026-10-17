@@ -49,7 +49,7 @@ export default function RevenueBanner() {
       <div className="pd-revenue-main">
         <div className="pd-revenue-num">{formatMoney(thisMonth.revenue)}</div>
         <div className="pd-revenue-label">
-          recovered this month &mdash; {thisMonth.count} rebooking{thisMonth.count === 1 ? "" : "s"} via your reminder links
+          recovered this month: {thisMonth.count} rebooking{thisMonth.count === 1 ? "" : "s"} via your reminder links
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export default function RevenueBanner() {
           <IconPencil width={14} height={14} />
           {isCustomPrice
             ? `Based on $${pricePerVisit}/visit`
-            : `Estimated at $${pricePerVisit}/visit \u2014 set your real price`}
+            : `Estimated at $${pricePerVisit}/visit. Set your real price`}
         </button>
       )}
     </div>

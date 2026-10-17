@@ -27,7 +27,7 @@ export default function Privacy() {
           <h2>How it&apos;s used</h2>
           <p>
             Owner contact details are used only to deliver the grooming reminders a groomer sets
-            up in their own account — never sold, and never used for unrelated marketing.
+            up in their own accountnever sold, and never used for unrelated marketing.
             Account and usage data helps us keep the service running reliably and improve it
             over time.
           </p>
