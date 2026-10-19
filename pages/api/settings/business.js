@@ -3,6 +3,24 @@ import { createSupabaseServerClient } from "../../../lib/supabase/server";
 const DEFAULT_PRICE = 55;
 const DEFAULT_TIMEZONE = "UTC";
 
+// If the business-profile SQL migration has not been run yet, the new columns
+// don't exist and a select that names them fails. That must never make the
+// timezone look like "UTC" again, so fall back to the original columns.
+async function readSettings(supabase, userId) {
+  const full = await supabase
+    .from("business_settings")
+    .select("default_service_price, timezone, business_name, business_phone, reply_to_email")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!full.error) return full.data;
+  const basic = await supabase
+    .from("business_settings")
+    .select("default_service_price, timezone")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return basic.data;
+}
+
 export default async function handler(req, res) {
   const supabase = createSupabaseServerClient(req, res);
   const {
@@ -11,11 +29,7 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: "Not authenticated" });
 
   if (req.method === "GET") {
-    const { data } = await supabase
-      .from("business_settings")
-      .select("default_service_price, timezone, business_name, business_phone, reply_to_email")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const data = await readSettings(supabase, user.id);
 
     return res.status(200).json({
       defaultServicePrice: data ? Number(data.default_service_price) : DEFAULT_PRICE,
@@ -68,13 +82,16 @@ export default async function handler(req, res) {
     }
 
     const { error } = await supabase.from("business_settings").upsert(update, { onConflict: "user_id" });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      const missingCol = /column .* does not exist|schema cache/i.test(error.message || "");
+      return res.status(500).json({
+        error: missingCol
+          ? "Database is missing new columns. Run supabase/add-business-profile.sql in the Supabase SQL Editor."
+          : error.message,
+      });
+    }
 
-    const { data: fresh } = await supabase
-      .from("business_settings")
-      .select("default_service_price, timezone, business_name, business_phone, reply_to_email")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const fresh = await readSettings(supabase, user.id);
 
     return res.status(200).json({
       defaultServicePrice: Number(fresh?.default_service_price ?? DEFAULT_PRICE),

@@ -180,6 +180,9 @@ export default function Dashboard({ userId, userEmail }) {
       setTimezone(timezoneForm);
       setTimezoneSaved(true);
       setTimeout(() => setTimezoneSaved(false), 2500);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || "Could not save timezone", "error");
     }
     setTimezoneSaving(false);
   }
