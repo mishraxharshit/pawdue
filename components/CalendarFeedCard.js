@@ -40,9 +40,9 @@ export default function CalendarFeedCard() {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 560, marginTop: 16 }}>
-      <h3 style={{ margin: "0 0 6px", fontSize: "1rem" }}>Add bookings to your calendar</h3>
-      <p className="sub" style={{ margin: "0 0 14px" }}>
+    <div className="card pd-set-card">
+      <h3 className="pd-set-title">Add bookings to your calendar</h3>
+      <p className="sub pd-set-sub">
         Subscribe once and every confirmed booking shows up in Google Calendar, Apple Calendar or Outlook.
         It updates about once an hour. This is one way: bookings flow into your calendar, not the other way.
       </p>

@@ -34,9 +34,9 @@ export default function BusinessProfileCard({ profile, onSaved }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   return (
-    <div className="card" style={{ maxWidth: 560, marginTop: 16 }}>
-      <h3 style={{ margin: "0 0 6px", fontSize: "1rem" }}>Your salon details</h3>
-      <p className="sub" style={{ margin: "0 0 14px" }}>
+    <div className="card pd-set-card">
+      <h3 className="pd-set-title">Your salon details</h3>
+      <p className="sub pd-set-sub">
         Shown in every reminder email, so owners see your salon, not a software tool. Replies go to your reply-to address.
       </p>
       <label>Salon name
@@ -49,7 +49,7 @@ export default function BusinessProfileCard({ profile, onSaved }) {
         <input type="email" value={form.replyToEmail} onChange={set("replyToEmail")} placeholder="you@yoursalon.com" />
       </label>
       {err && <div className="error">{err}</div>}
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 16 }}>
         <button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save details"}</button>
         {msg && <span className="pd-form-hint" style={{ margin: 0 }}>{msg}</span>}
       </div>
