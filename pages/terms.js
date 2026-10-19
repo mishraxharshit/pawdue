@@ -25,7 +25,7 @@ export default function Terms() {
 
           <h2>Plans and billing</h2>
           <p>
-            The Free plan is limited to 10 dogs. Starter and Pro are billed monthly and can be
+            The Free plan is limited to 25 dogs. Starter and Pro are billed monthly and can be
             cancelled at any time from the dashboard; cancelling stops future billing but does
             not refund the current billing period. Prices are listed on the{" "}
             <a href="/pricing">pricing page</a> and shown in USD.

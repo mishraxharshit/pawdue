@@ -41,7 +41,7 @@ const FEATURES = [
 const FAQ_ITEMS = [
   {
     q: "Do I need a credit card to start?",
-    a: "No. The free plan covers up to 10 dogs with no card on file. You only add billing details if you upgrade.",
+    a: "No. The free plan covers up to 25 dogs with no card on file. You only add billing details if you upgrade.",
   },
   {
     q: "Does this cost extra per message?",
@@ -94,7 +94,7 @@ export default function Landing() {
               <Link className="pd-btn pd-btn-ghost" href="/pricing">See pricing</Link>
             </div>
             <div className="pd-trust-strip">
-              <span className="pd-trust-item"><IconCheck width={16} height={16} /> Free for up to 10 dogs</span>
+              <span className="pd-trust-item"><IconCheck width={16} height={16} /> Free for up to 25 dogs</span>
               <span className="pd-trust-item"><IconCheck width={16} height={16} /> No credit card</span>
               <span className="pd-trust-item"><IconCheck width={16} height={16} /> 2-minute setup</span>
             </div>
@@ -227,7 +227,7 @@ export default function Landing() {
           <ComparisonTable />
           <div className="pd-midcta">
             <Link className="pd-btn pd-btn-primary" href="/register">Start free in 2 minutes</Link>
-            <p className="pd-midcta-note">Up to 10 dogs on the house. No card required.</p>
+            <p className="pd-midcta-note">Up to 25 dogs on the house. No card required.</p>
           </div>
         </div>
 

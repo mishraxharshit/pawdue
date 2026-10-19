@@ -18,7 +18,7 @@ export async function getServerSideProps({ req, res }) {
 const FAQ_ITEMS = [
   {
     q: "Do I need a credit card to start free?",
-    a: "No. The Free plan covers up to 10 dogs with no card required. Add a card only when you upgrade to Starter or Pro.",
+    a: "No. The Free plan covers up to 25 dogs with no card required. Add a card only when you upgrade to Starter or Pro.",
   },
   {
     q: "What happens if I go over my dog limit?",
@@ -96,7 +96,7 @@ export default function Pricing({ isLoggedIn }) {
               <div className="pd-price-amount">$0</div>
               <p className="pd-price-sub">Try it with a handful of clients.</p>
               <ul className="pd-price-feats">
-                <li>Up to 10 dogs</li>
+                <li>Up to 25 dogs</li>
                 <li>Email reminders (WhatsApp/SMS optional)</li>
                 <li>Daily automatic sends</li>
                 <li>Owner self-booking link</li>
@@ -164,7 +164,7 @@ export default function Pricing({ isLoggedIn }) {
             </div>
             <div className="pd-pc-row">
               <div>Dogs tracked</div>
-              <div>Up to 10</div>
+              <div>Up to 25</div>
               <div>Up to 75</div>
               <div>Unlimited</div>
             </div>
