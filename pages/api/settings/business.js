@@ -13,19 +13,22 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const { data } = await supabase
       .from("business_settings")
-      .select("default_service_price, timezone")
+      .select("default_service_price, timezone, business_name, business_phone, reply_to_email")
       .eq("user_id", user.id)
       .maybeSingle();
 
     return res.status(200).json({
       defaultServicePrice: data ? Number(data.default_service_price) : DEFAULT_PRICE,
       timezone: data?.timezone || DEFAULT_TIMEZONE,
+      businessName: data?.business_name || "",
+      businessPhone: data?.business_phone || "",
+      replyToEmail: data?.reply_to_email || "",
       isCustomized: !!data,
     });
   }
 
   if (req.method === "PATCH") {
-    const { defaultServicePrice, timezone } = req.body || {};
+    const { defaultServicePrice, timezone, businessName, businessPhone, replyToEmail } = req.body || {};
     const update = { user_id: user.id };
 
     if (defaultServicePrice !== undefined) {
@@ -48,18 +51,37 @@ export default async function handler(req, res) {
       update.timezone = timezone;
     }
 
+    if (businessName !== undefined) {
+      const v = String(businessName).trim().slice(0, 80);
+      update.business_name = v || null;
+    }
+    if (businessPhone !== undefined) {
+      const v = String(businessPhone).trim().slice(0, 30);
+      update.business_phone = v || null;
+    }
+    if (replyToEmail !== undefined) {
+      const v = String(replyToEmail).trim();
+      if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+        return res.status(400).json({ error: "Reply-to email doesn't look valid" });
+      }
+      update.reply_to_email = v || null;
+    }
+
     const { error } = await supabase.from("business_settings").upsert(update, { onConflict: "user_id" });
     if (error) return res.status(500).json({ error: error.message });
 
     const { data: fresh } = await supabase
       .from("business_settings")
-      .select("default_service_price, timezone")
+      .select("default_service_price, timezone, business_name, business_phone, reply_to_email")
       .eq("user_id", user.id)
       .maybeSingle();
 
     return res.status(200).json({
       defaultServicePrice: Number(fresh?.default_service_price ?? DEFAULT_PRICE),
       timezone: fresh?.timezone || DEFAULT_TIMEZONE,
+      businessName: fresh?.business_name || "",
+      businessPhone: fresh?.business_phone || "",
+      replyToEmail: fresh?.reply_to_email || "",
       isCustomized: true,
     });
   }
