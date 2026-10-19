@@ -10,6 +10,7 @@ import DogModal from "../components/DogModal";
 import ImportDogsModal from "../components/ImportDogsModal";
 import BusinessProfileCard from "../components/BusinessProfileCard";
 import CalendarFeedCard from "../components/CalendarFeedCard";
+import LocalTimeNow from "../components/LocalTimeNow";
 import RevenueBanner from "../components/RevenueBanner";
 import SetupBanner from "../components/SetupBanner";
 import RevenueChart from "../components/RevenueChart";
@@ -955,12 +956,14 @@ export default function Dashboard({ userId, userEmail }) {
             public booking page (pages/book/[token].js) - previously a fixed
             Mon-Sat 9-5 constant shared by every account. */}
         {activeView === "availability" && (
-          <div className="card" style={{ maxWidth: 560 }}>
+          <div className="pd-settings-grid">
+          <div className="card pd-set-card">
             {!availability ? (
               <div className="skeleton-card" />
             ) : (
               <>
-                <p className="sub" style={{ margin: "0 0 20px" }}>
+                <h3 className="pd-set-title">Booking hours</h3>
+                <p className="sub pd-set-sub">
                   This is what clients see when they open their booking link. Changes apply immediately.
                 </p>
 
@@ -1047,7 +1050,7 @@ export default function Dashboard({ userId, userEmail }) {
 
                 {availabilityError && <div className="error" style={{ marginTop: 14 }}>{availabilityError}</div>}
 
-                <div style={{ marginTop: 22 }}>
+                <div className="pd-set-actions">
                   <button onClick={saveAvailability} disabled={availabilitySaving}>
                     {availabilitySaving ? "Saving…" : "Save availability"}
                   </button>
@@ -1055,23 +1058,19 @@ export default function Dashboard({ userId, userEmail }) {
               </>
             )}
           </div>
-        )}
 
-        {activeView === "availability" && (
-          <>
-          <BusinessProfileCard profile={profile} onSaved={setProfile} />
-          <CalendarFeedCard />
-          <div className="card" style={{ maxWidth: 560, marginTop: 16 }}>
-            <h3 style={{ margin: "0 0 6px", fontSize: "1rem" }}>Timezone</h3>
-            <p className="sub" style={{ margin: "0 0 14px" }}>
-              Used to decide each dog&apos;s local &ldquo;day&rdquo; for due dates and when the
-              daily reminder job runs for your account, not just the server&apos;s timezone.
+          <div className="pd-settings-col">
+          <div className="card pd-set-card">
+            <h3 className="pd-set-title">Timezone</h3>
+            <p className="sub pd-set-sub">
+              Reminders go out in the morning, in this timezone, and each dog&apos;s due date is
+              worked out on your local day. Set this to where your salon is.
             </p>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <LocalTimeNow timezone={timezoneForm} />
+            <div className="pd-set-inline">
               <select
                 value={timezoneForm}
                 onChange={(e) => setTimezoneForm(e.target.value)}
-                style={{ maxWidth: 320 }}
               >
                 {COMMON_TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>{tz}</option>
@@ -1083,7 +1082,10 @@ export default function Dashboard({ userId, userEmail }) {
             </div>
             {timezoneSaved && <div className="pd-form-hint" style={{ marginTop: 10, marginBottom: 0 }}>Saved ✓</div>}
           </div>
-          </>
+          <BusinessProfileCard profile={profile} onSaved={setProfile} />
+          <CalendarFeedCard />
+          </div>
+          </div>
         )}
 
         {/* ---------- Billing view ---------- */}
