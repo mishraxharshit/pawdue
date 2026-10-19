@@ -3,9 +3,13 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 import { createSupabaseBrowserClient } from "../lib/supabase/client";
-import { BREED_INTERVALS, computeStatus, reminderMessage } from "../lib/breedIntervals";
+import { BREED_INTERVALS, computeStatus } from "../lib/breedIntervals";
+import { buildReminderEmail } from "../lib/reminderEmail";
 import Avatar from "../components/Avatar";
 import DogModal from "../components/DogModal";
+import ImportDogsModal from "../components/ImportDogsModal";
+import BusinessProfileCard from "../components/BusinessProfileCard";
+import CalendarFeedCard from "../components/CalendarFeedCard";
 import RevenueBanner from "../components/RevenueBanner";
 import SetupBanner from "../components/SetupBanner";
 import RevenueChart from "../components/RevenueChart";
@@ -103,6 +107,8 @@ export default function Dashboard({ userId, userEmail }) {
   const [deleteError, setDeleteError] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [profile, setProfile] = useState({ businessName: "", businessPhone: "", replyToEmail: "" });
   const [modalMode, setModalMode] = useState("add"); // 'add' | 'edit'
   const [modalValues, setModalValues] = useState(emptyForm);
   const [modalSaving, setModalSaving] = useState(false);
@@ -158,6 +164,7 @@ export default function Dashboard({ userId, userEmail }) {
       const data = await res.json();
       setTimezone(data.timezone || "UTC");
       setTimezoneForm(data.timezone || "UTC");
+      setProfile({ businessName: data.businessName || "", businessPhone: data.businessPhone || "", replyToEmail: data.replyToEmail || "" });
     }
   }
 
@@ -427,8 +434,17 @@ export default function Dashboard({ userId, userEmail }) {
     setBusyId(null);
   }
 
+  // Same builder the cron job uses, so the preview is exactly what the owner gets.
+  function previewEmail(dog, comp) {
+    return buildReminderEmail({
+      items: [{ dog, comp }],
+      business: { name: profile.businessName, phone: profile.businessPhone },
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    });
+  }
+
   function copyReminder(dog, comp) {
-    const text = reminderMessage(dog, comp);
+    const text = previewEmail(dog, comp).text;
     navigator.clipboard?.writeText(text);
     showToast("Reminder text copied ✓");
   }
@@ -628,6 +644,12 @@ export default function Dashboard({ userId, userEmail }) {
           </div>
           <div className="pd-topbar-actions">
             {activeView === "dogs" && (
+              <>
+                <button className="small ghost" onClick={() => setImportOpen(true)}>Import CSV</button>
+                <button className="small ghost" onClick={() => { window.location.href = "/api/dogs/export"; }}>Export CSV</button>
+              </>
+            )}
+            {activeView === "dogs" && (
               <button className="pd-icon-btn primary" onClick={openAddModal} aria-label="Add dog" title="Add dog">
                 <IconPlus />
               </button>
@@ -826,7 +848,8 @@ export default function Dashboard({ userId, userEmail }) {
                         </div>
                         {openMsgId === dog.id && (
                           <div className="msgbox" style={{ margin: "0 16px 12px" }}>
-                            {reminderMessage(dog, comp)}
+                            <div style={{ fontWeight: 700, marginBottom: 6 }}>Subject: {previewEmail(dog, comp).subject}</div>
+                            <div style={{ whiteSpace: "pre-wrap" }}>{previewEmail(dog, comp).text}</div>
                             <div style={{ marginTop: 10 }}>
                               <button className="small ghost" onClick={() => copyReminder(dog, comp)}>Copy text</button>
                             </div>
@@ -856,7 +879,7 @@ export default function Dashboard({ userId, userEmail }) {
         {activeView === "bookings" && (
           <div className="pd-table">
             {bookings.length === 0 ? (
-              <div className="pd-tempty">No upcoming bookings yetthey&apos;ll show up here the moment an owner books through their reminder link.</div>
+              <div className="pd-tempty">No upcoming bookings yet. They&apos;ll show up here the moment an owner books through their reminder link.</div>
             ) : (
               <>
                 <div className="pd-trow pd-thead" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1fr" }}>
@@ -1032,6 +1055,9 @@ export default function Dashboard({ userId, userEmail }) {
         )}
 
         {activeView === "availability" && (
+          <>
+          <BusinessProfileCard profile={profile} onSaved={setProfile} />
+          <CalendarFeedCard />
           <div className="card" style={{ maxWidth: 560, marginTop: 16 }}>
             <h3 style={{ margin: "0 0 6px", fontSize: "1rem" }}>Timezone</h3>
             <p className="sub" style={{ margin: "0 0 14px" }}>
@@ -1054,6 +1080,7 @@ export default function Dashboard({ userId, userEmail }) {
             </div>
             {timezoneSaved && <div className="pd-form-hint" style={{ marginTop: 10, marginBottom: 0 }}>Saved ✓</div>}
           </div>
+          </>
         )}
 
         {/* ---------- Billing view ---------- */}
@@ -1095,6 +1122,13 @@ export default function Dashboard({ userId, userEmail }) {
           limitReached={limitReached}
           onSubmit={handleModalSubmit}
           onClose={closeModal}
+        />
+      )}
+
+      {importOpen && (
+        <ImportDogsModal
+          onClose={() => setImportOpen(false)}
+          onDone={() => { setImportOpen(false); loadDogs(); }}
         />
       )}
 

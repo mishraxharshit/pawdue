@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
-import { computeStatus, reminderMessage, reminderSubject } from "../../../lib/breedIntervals";
+import { computeStatus } from "../../../lib/breedIntervals";
+import { buildReminderEmail, groupByOwner } from "../../../lib/reminderEmail";
 import { sendReminderMessage, sendEmail } from "../../../lib/messaging";
 import { localHour } from "../../../lib/localTime";
 
@@ -69,8 +70,9 @@ export default async function handler(req, res) {
     // Each groomer's own local day decides "is this dog due yet", not the
     // server's timezone - a groomer in Mumbai and one in Chicago shouldn't
     // have their dogs flip to "overdue" at the same UTC instant.
-    const { data: settingsRows } = await supabase.from("business_settings").select("user_id, timezone");
+    const { data: settingsRows } = await supabase.from("business_settings").select("user_id, timezone, business_name, business_phone, reply_to_email");
     const timezoneByUser = new Map((settingsRows || []).map((s) => [s.user_id, s.timezone]));
+    const profileByUser = new Map((settingsRows || []).map((s) => [s.user_id, s]));
 
     // Dogs with an already-confirmed, still-upcoming booking should NOT get a
     // "you're overdue!" reminder - they already booked. Fetch this once up
@@ -94,6 +96,7 @@ export default async function handler(req, res) {
       results.warning = `REMINDER_SEND_HOUR="${rawSendHour}" is not a whole number from 0 to 23 - ignoring it.`;
     }
 
+    const dueEntries = [];
     for (const dog of dogs) {
       if (dog.opted_out) {
         results.skipped++;
@@ -127,31 +130,51 @@ export default async function handler(req, res) {
         }
       }
 
-      const body = reminderMessage(dog, comp);
-      const subject = reminderSubject(dog, comp);
+      dueEntries.push({ dog, comp });
+    }
+
+    // One message per owner: a client with three dogs gets one email listing
+    // all three, not three emails in a row.
+    for (const group of groupByOwner(dueEntries)) {
+      const first = group[0].dog;
+      const profile = profileByUser.get(first.user_id) || {};
+      const business = { name: profile.business_name, phone: profile.business_phone };
+      const email = buildReminderEmail({ items: group, business });
+      const names = group.map((g) => g.dog.dog_name).join(" and ");
+      const whatsappParams = [first.owner_name, names, business.name || "your groomer", group[0].dog.booking_token
+        ? `${process.env.NEXT_PUBLIC_APP_URL || ""}/book/${group[0].dog.booking_token}`
+        : process.env.NEXT_PUBLIC_APP_URL || ""];
 
       try {
-        const channel = await sendReminderMessage(dog, body, subject);
-        await supabase
-          .from("dogs")
-          .update({
-            last_reminder_sent_at: now.toISOString(),
-            last_reminder_stage: comp.status,
-            last_reminder_channel: channel,
-            last_reminder_result: "sent",
-          })
-          .eq("id", dog.id);
-        results.sent++;
-        results.details.push({ dogId: dog.id, dogName: dog.dog_name, channel, status: comp.status });
+        const channel = await sendReminderMessage(first, email.text, email.subject, {
+          email: { html: email.html, replyTo: profile.reply_to_email || undefined, fromName: business.name },
+          whatsappParams,
+        });
+        for (const { dog, comp } of group) {
+          await supabase
+            .from("dogs")
+            .update({
+              last_reminder_sent_at: now.toISOString(),
+              last_reminder_stage: comp.status,
+              last_reminder_channel: channel,
+              last_reminder_result: "sent",
+            })
+            .eq("id", dog.id);
+          results.sent++;
+          results.details.push({ dogId: dog.id, dogName: dog.dog_name, channel, status: comp.status, groupedWith: group.length - 1 });
+        }
       } catch (err) {
-        await supabase
-          .from("dogs")
-          .update({ last_reminder_sent_at: now.toISOString(), last_reminder_result: "failed" })
-          .eq("id", dog.id);
-        results.failed++;
-        results.details.push({ dogId: dog.id, dogName: dog.dog_name, error: err.message });
+        for (const { dog } of group) {
+          await supabase
+            .from("dogs")
+            .update({ last_reminder_sent_at: now.toISOString(), last_reminder_result: "failed" })
+            .eq("id", dog.id);
+          results.failed++;
+          results.details.push({ dogId: dog.id, dogName: dog.dog_name, error: err.message });
+        }
       }
     }
+
 
     // A batch that ran but failed for most/all dogs is just as much of a
     // problem as one that crashed outright (e.g. Resend key revoked) - flag
