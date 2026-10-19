@@ -8,6 +8,9 @@ import { localHour } from "../../../lib/localTime";
 // so people aren't texted every single day while overdue.
 const REMINDER_COOLDOWN_DAYS = 5;
 
+// Reminders go out any time in the first N local hours after REMINDER_SEND_HOUR.
+const SEND_WINDOW_HOURS = 6;
+
 // If this whole job throws (bad query, provider outage, a bug), the entire
 // reminder system silently stops with nobody noticing until a customer
 // complains. This alert is the difference between "found out in 2 minutes
@@ -70,7 +73,13 @@ export default async function handler(req, res) {
     // Each groomer's own local day decides "is this dog due yet", not the
     // server's timezone - a groomer in Mumbai and one in Chicago shouldn't
     // have their dogs flip to "overdue" at the same UTC instant.
-    const { data: settingsRows } = await supabase.from("business_settings").select("user_id, timezone, business_name, business_phone, reply_to_email");
+    let { data: settingsRows, error: settingsError } = await supabase
+      .from("business_settings")
+      .select("user_id, timezone, business_name, business_phone, reply_to_email");
+    if (settingsError) {
+      // Migration not run yet: still honor each groomer's timezone.
+      ({ data: settingsRows } = await supabase.from("business_settings").select("user_id, timezone"));
+    }
     const timezoneByUser = new Map((settingsRows || []).map((s) => [s.user_id, s.timezone]));
     const profileByUser = new Map((settingsRows || []).map((s) => [s.user_id, s]));
 
@@ -89,6 +98,7 @@ export default async function handler(req, res) {
       skipped: 0,
       failed: 0,
       notSendHour: 0,
+      skipReasons: { optedOut: 0, alreadyBooked: 0, notDueYet: 0, cooldown: 0 },
       mode: gateByHour ? `hourly (sending at ${parsedSendHour}:00 local time)` : "send to all due dogs",
       details: [],
     };
@@ -99,18 +109,24 @@ export default async function handler(req, res) {
     const dueEntries = [];
     for (const dog of dogs) {
       if (dog.opted_out) {
+        results.skipReasons.optedOut++;
         results.skipped++;
         continue;
       }
 
       if (dogIdsWithUpcomingBooking.has(dog.id)) {
+        results.skipReasons.alreadyBooked++;
         results.skipped++;
         continue;
       }
 
       const timezone = timezoneByUser.get(dog.user_id) || "UTC";
 
-      if (gateByHour && localHour(now, timezone) !== parsedSendHour) {
+      // Send during a window that starts at the send hour (not only inside that
+      // exact hour), because GitHub's scheduler can run late. The 5-day cooldown
+      // below stops a dog from being emailed twice.
+      const hoursPastSendHour = (localHour(now, timezone) - parsedSendHour + 24) % 24;
+      if (gateByHour && hoursPastSendHour >= SEND_WINDOW_HOURS) {
         results.notSendHour++;
         continue;
       }
@@ -118,6 +134,7 @@ export default async function handler(req, res) {
       const comp = computeStatus(dog, now, timezone);
 
       if (comp.status === "ok") {
+        results.skipReasons.notDueYet++;
         results.skipped++;
         continue;
       }
@@ -125,6 +142,7 @@ export default async function handler(req, res) {
       if (dog.last_reminder_sent_at) {
         const daysSinceLastReminder = (now - new Date(dog.last_reminder_sent_at)) / (1000 * 60 * 60 * 24);
         if (daysSinceLastReminder < REMINDER_COOLDOWN_DAYS) {
+          results.skipReasons.cooldown++;
           results.skipped++;
           continue;
         }
