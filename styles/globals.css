@@ -1132,3 +1132,100 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .pd-set-card label:first-of-type { margin-top: 0; }
 .pd-set-card label input { margin-top: 4px; }
 .pd-set-card label.pd-avail-checkline { display: flex; margin-top: 18px; }
+
+/* PawDue: paste at the END of styles/globals.css (after the availability CSS) */
+
+/* ===== Dogs page: clear labelled actions, no hover needed (desktop + mobile) ===== */
+
+/* Topbar: labelled "Add dog" button, and a profile chip that never gets cut off */
+.pd-add-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 16px;
+  border-radius: 100px; background: var(--accent); color: #fff; border: 1px solid var(--accent);
+  font-weight: 700; font-size: .85rem; cursor: pointer; white-space: nowrap;
+}
+.pd-add-btn:hover { opacity: .92; }
+.pd-add-btn svg { width: 16px; height: 16px; flex: none; }
+.pd-profile-email { padding: 8px 12px 6px; font-size: .78rem; color: var(--sub); word-break: break-all; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.pd-topbar-actions { margin-left: auto; }
+@media (max-width: 700px) {
+  .pd-add-btn { width: 38px; padding: 0; }
+  .pd-add-btn span { display: none; }
+  .pd-profile-text { display: none; }
+  .pd-topbar h1 { font-size: 1.35rem; }
+}
+
+/* Import / Export row */
+.pd-dogs-tools { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
+.pd-dogs-tools button { padding: 7px 14px; font-size: .8rem; }
+@media (max-width: 560px) {
+  .pd-dogs-tools button { flex: 1; padding: 10px 12px; }
+}
+
+/* Desktop: every action has a text label. Wide Actions column to fit them. */
+.pd-trow { grid-template-columns: 34px 2fr 1.5fr 1.1fr 1fr 350px; }
+.pd-trow.pd-trow-arch { grid-template-columns: 2fr 1.6fr 220px; }
+.pd-thead-selectall { display: none; }
+.pd-tcell-actions .pd-row-action {
+  width: auto; height: 32px; padding: 0 10px; gap: 5px; font-size: .76rem; font-weight: 700;
+  white-space: nowrap; border-radius: 8px; font-family: inherit;
+}
+.pd-tcell-actions .pd-row-action svg { width: 15px; height: 15px; flex: none; }
+.pd-tcell-actions .pd-row-action.is-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pd-tcell-actions .pd-row-action.is-primary:hover { opacity: .92; background: var(--accent); color: #fff; }
+.pd-tcell-actions { gap: 6px; }
+.pd-tcell-dog-breed { line-height: 1.3; }
+
+/* Narrower screens and phones: each dog becomes a small card.
+   Row 1: dog + status. Row 2: owner + next due. Row 3: four labelled buttons. */
+@media (max-width: 1180px) {
+  .pd-trow:not(.pd-thead) {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    grid-template-areas: "chk dog status" ". owner due" ". actions actions";
+    row-gap: 10px; align-items: start; padding: 14px;
+  }
+  .pd-trow .pd-tcheck { grid-area: chk; align-self: center; }
+  .pd-trow .pd-tcell-dog { grid-area: dog; align-items: flex-start; }
+  .pd-trow .pd-tcell-status { grid-area: status; align-self: center; }
+  .pd-trow .pd-tcell-owner { grid-area: owner; display: block; }
+  .pd-trow .pd-tcell-due-col { grid-area: due; display: block; text-align: right; }
+  .pd-trow .pd-tcell-actions {
+    grid-area: actions; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 460px;
+  }
+  .pd-tcell-actions .pd-row-action { width: 100%; justify-content: center; padding: 0 4px; height: 36px; }
+
+  /* Archived rows: dog, owner, then two buttons */
+  .pd-trow.pd-trow-arch:not(.pd-thead) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "dog" "owner" "actions";
+  }
+  .pd-trow-arch .pd-tcell-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 320px; }
+  .pd-trow.pd-trow-arch.pd-thead { display: none; }
+
+  /* Header becomes a single "Select all" line */
+  .pd-trow.pd-thead:not(.pd-trow-arch) { grid-template-columns: 28px 1fr; padding: 10px 14px; }
+  .pd-trow.pd-thead > div { display: none; }
+  .pd-trow.pd-thead > .pd-thead-selectall { display: block; }
+}
+@media (max-width: 380px) {
+  .pd-tcell-actions .pd-row-action { font-size: .7rem; gap: 3px; }
+  .pd-tcell-actions .pd-row-action svg { width: 13px; height: 13px; }
+}
+.pd-tcell-dog > div:last-child { min-width: 0; }
+.pd-tcell-dog-breed { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .pd-tcell-actions .pd-row-action { font-size: .72rem; gap: 4px; padding: 0 2px; }
+  .pd-tcell-actions .pd-row-action svg { width: 13px; height: 13px; }
+}
+@media (max-width: 360px) {
+  .pd-trow .pd-tcell-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* PawDue: paste at the very END of styles/globals.css (after the previous two snippets) */
+
+/* ===== Dogs page: phone buttons, 2 x 2 so labels never get cut ===== */
+@media (max-width: 520px) {
+  .pd-trow .pd-tcell-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: none; }
+  .pd-tcell-actions .pd-row-action { height: 40px; font-size: .82rem; gap: 6px; padding: 0 10px; }
+  .pd-tcell-actions .pd-row-action svg { width: 16px; height: 16px; }
+}
+.pd-tcell-actions .pd-row-action span { overflow: hidden; text-overflow: ellipsis; }
