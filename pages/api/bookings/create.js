@@ -1,11 +1,16 @@
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
-import { generateAvailableSlots, getAvailabilitySettings } from "../../../lib/booking";
+import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../lib/booking";
+import { rateLimit } from "../../../lib/rateLimit";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  if (!rateLimit(req, res, { name: "booking-create", limit: 10, windowMs: 10 * 60 * 1000 })) return;
+
   const { token, slot } = req.body || {};
-  if (!token || !slot) return res.status(400).json({ error: "token and slot are required" });
+  if (!token || !slot || typeof token !== "string" || typeof slot !== "string") {
+    return res.status(400).json({ error: "token and slot are required" });
+  }
 
   const admin = createSupabaseAdminClient();
 
@@ -27,9 +32,24 @@ export default async function handler(req, res) {
     .select("slot_at")
     .eq("user_id", dog.user_id);
 
+  // One upcoming booking per dog link. Without this, anyone holding a link
+  // could grab every free slot of the groomer.
+  const { count: activeForDog } = await admin
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("dog_id", dog.id)
+    .eq("status", "confirmed")
+    .gte("slot_at", new Date().toISOString());
+  if ((activeForDog || 0) >= 1) {
+    return res.status(409).json({
+      error: "This dog already has an upcoming appointment. Please contact the groomer to change it.",
+    });
+  }
+
   const bookedIso = new Set((existingBookings || []).map((b) => new Date(b.slot_at).toISOString()));
   const settings = await getAvailabilitySettings(admin, dog.user_id);
-  const stillAvailable = generateAvailableSlots(bookedIso, settings).includes(slot);
+  const tz = await getBusinessTimezone(admin, dog.user_id);
+  const stillAvailable = generateAvailableSlots(bookedIso, settings, tz).includes(slot);
 
   if (!stillAvailable) {
     return res.status(409).json({ error: "Sorry, that slot was just taken. Please pick another." });

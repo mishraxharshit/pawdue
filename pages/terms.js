@@ -8,7 +8,7 @@ export default function Terms() {
         <MarketingNav />
         <div className="pd-content">
           <h1 className="pd-display">Terms &amp; conditions</h1>
-          <p className="pd-content-updated">Last updated: September 2026</p>
+          <p className="pd-content-updated">Last updated: October 2026</p>
 
           <p>
             These terms cover use of PawDue, a tool that tracks grooming schedules and sends
@@ -20,12 +20,12 @@ export default function Terms() {
           <p>
             You&apos;re responsible for the accuracy of the dog and owner information you add,
             and for keeping your login credentials secure. You must have a lawful basis for
-            messaging the owners you addtypically that they&apos;re your existing clients.
+            messaging the owners you add, typically that they&apos;re your existing clients.
           </p>
 
           <h2>Plans and billing</h2>
           <p>
-            The Free plan is limited to 25 dogs. Starter and Pro are billed monthly and can be
+            The Free plan is limited to 30 dogs. Starter and Pro are billed monthly and can be
             cancelled at any time from the dashboard; cancelling stops future billing but does
             not refund the current billing period. Prices are listed on the{" "}
             <a href="/pricing">pricing page</a> and shown in USD.
@@ -40,7 +40,7 @@ export default function Terms() {
 
           <h2>Message delivery</h2>
           <p>
-            PawDue sends reminders through third-party channels (WhatsApp, SMS, email) and does
+            PawDue sends reminders through third-party channels (email, WhatsApp, SMS) and does
             its best to ensure timely delivery, including automatic fallback between channels.
             We can&apos;t guarantee delivery in every case, since it ultimately depends on those
             networks and the recipient&apos;s device.

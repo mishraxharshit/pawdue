@@ -102,12 +102,12 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .link { color: var(--accent); cursor: pointer; text-decoration: underline; }
 
 /* ============================================================
-   Landing page v3scoped to .pd-landing so the app (dashboard,
+   Landing page v3: scoped to .pd-landing so the app (dashboard,
    login, register) keeps its own separate look untouched.
    Palette is a "grooming studio" color story: deep pine green as
    the single brand color (waxed canvas, barbershop signage) with
    a brass/leather gold reserved for the one primary action per
-   viewdisciplined rather than four mascot colors competing for
+   view, disciplined rather than four mascot colors competing for
    attention. Paper backgrounds instead of stark white or cream.
    Type: one grotesk family throughout (Plus Jakarta Sans), weight
    and tracking do the personality work instead of a second face.
@@ -512,7 +512,7 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .usage-bar .usage-label b { color: var(--ink); }
 
 /* ============================================================
-   Dashboard app shellicon sidebar + topbar + table, replacing
+   Dashboard app shell: icon sidebar + topbar + table, replacing
    the old single-column card list with a proper SaaS-style layout.
    Uses the app's root tokens (--ink, --line, --accent, etc.) rather
    than the pd-landing marketing palette, since this is the product

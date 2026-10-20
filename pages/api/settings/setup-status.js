@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       issues.push({
         key: "dogs_without_channel",
         severity: "high",
-        message: `${count} dog${count === 1 ? "" : "s"} ${count === 1 ? "has" : "have"} no owner email on file, and WhatsApp/SMS aren't connected yetthey won't receive reminders.`,
+        message: `${count} dog${count === 1 ? "" : "s"} ${count === 1 ? "has" : "have"} no owner email on file, and WhatsApp/SMS aren't connected yet. They won't receive reminders.`,
       });
     }
   }

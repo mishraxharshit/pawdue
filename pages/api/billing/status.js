@@ -17,7 +17,8 @@ export default async function handler(req, res) {
     .maybeSingle();
 
   const plan = sub?.plan || "free";
-  const { count } = await supabase.from("dogs").select("*", { count: "exact", head: true });
+  const { count } = await supabase.from("dogs").select("*", { count: "exact", head: true })
+    .eq("is_archived", false);
 
   return res.status(200).json({
     plan,

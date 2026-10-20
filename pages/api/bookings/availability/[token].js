@@ -1,9 +1,12 @@
 import { createSupabaseAdminClient } from "../../../../lib/supabase/admin";
-import { generateAvailableSlots, getAvailabilitySettings } from "../../../../lib/booking";
+import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../../lib/booking";
+import { rateLimit } from "../../../../lib/rateLimit";
 import { computeStatus } from "../../../../lib/breedIntervals";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+
+  if (!rateLimit(req, res, { name: "booking-availability", limit: 60, windowMs: 10 * 60 * 1000 })) return;
 
   const { token } = req.query;
   const admin = createSupabaseAdminClient();
@@ -28,18 +31,13 @@ export default async function handler(req, res) {
 
   const bookedIso = new Set((existingBookings || []).map((b) => new Date(b.slot_at).toISOString()));
   const settings = await getAvailabilitySettings(admin, dog.user_id);
-  const slots = generateAvailableSlots(bookedIso, settings);
-
-  const { data: bizSettings } = await admin
-    .from("business_settings")
-    .select("timezone")
-    .eq("user_id", dog.user_id)
-    .maybeSingle();
+  const timezone = await getBusinessTimezone(admin, dog.user_id);
+  const slots = generateAvailableSlots(bookedIso, settings, timezone);
 
   // Shown on the owner's booking page too, not just the groomer's dashboard -
   // an owner who can see "due in 9 days" understands why they got the text,
   // and is more likely to actually pick a slot instead of ignoring the link.
-  const comp = computeStatus(dog, new Date(), bizSettings?.timezone || "UTC");
+  const comp = computeStatus(dog, new Date(), timezone);
   const elapsedDays = Math.round((new Date() - new Date(dog.last_groom_date)) / 86400000);
   const totalDays = dog.interval_weeks * 7;
   const progressPct = Math.max(0, Math.min(100, Math.round((elapsedDays / totalDays) * 100)));
@@ -49,6 +47,7 @@ export default async function handler(req, res) {
     ownerName: dog.owner_name,
     breed: dog.breed,
     slots,
+    timezone,
     status: {
       state: comp.status,
       daysLeft: comp.daysLeft,
