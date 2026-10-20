@@ -33,11 +33,19 @@ jobs:
           if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
             echo "Missing APP_URL or CRON_SECRET repository secret."; exit 1
           fi
-          code=$(curl -sS -o response.json -w "%{http_code}" \
+          # Drop any trailing slash: "https://site/" + "/api/..." becomes "//api/..." and gets redirected.
+          APP_URL="${APP_URL%/}"
+          code=$(curl -sS -o response.json -w "%{http_code} %{redirect_url}" \
             -H "Authorization: Bearer $CRON_SECRET" \
             "$APP_URL/api/cron/send-reminders")
+          redirect="${code#* }"
+          code="${code%% *}"
           echo "HTTP $code"
           cat response.json; echo
+          if [ -n "$redirect" ]; then
+            echo "The address redirects to: $redirect"
+            echo "Set the APP_URL secret to exactly that address (origin only, no path, no trailing slash)."
+          fi
           if [ "$code" != "200" ]; then
             echo "Reminder endpoint did not return 200. Check APP_URL (exact address, no redirect) and CRON_SECRET."
             exit 1
