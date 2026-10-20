@@ -15,7 +15,7 @@ const FEATURES = [
   {
     icon: IconMessage,
     tone: "coral",
-    title: "Reminders that always arrive",
+    title: "Reminders that send themselves",
     body: "Sends by email today, with WhatsApp and SMS as automatic backups the moment they're connected. Zero manual follow-up either way.",
   },
   {
@@ -41,15 +41,15 @@ const FEATURES = [
 const FAQ_ITEMS = [
   {
     q: "Do I need a credit card to start?",
-    a: "No. The free plan covers up to 25 dogs with no card on file. You only add billing details if you upgrade.",
+    a: "No. The free plan covers up to 30 dogs with no card on file. You only add billing details if you upgrade.",
   },
   {
     q: "Does this cost extra per message?",
-    a: "No per-message fees on any plan - reminders are included. Email is the primary channel, with WhatsApp and SMS as automatic backups once those are connected.",
+    a: "PawDue never charges per message, and reminders are included on every plan. Email is the primary channel, with WhatsApp and SMS as automatic backups once connected. If you connect those, the provider (Meta or Twilio) bills you directly for their own usage.",
   },
   {
     q: "Can I bring in my existing client list?",
-    a: "Yes - add dogs one at a time from the dashboard, or import a spreadsheet if you're moving a larger book of clients. We can help with the import if you get stuck.",
+    a: "Yes. Add dogs one at a time from the dashboard, or upload a CSV file if you're moving a larger book of clients (in Excel or Google Sheets, choose Save as CSV). We can help with the import if you get stuck.",
   },
   {
     q: "What happens if I cancel?",
@@ -94,7 +94,7 @@ export default function Landing() {
               <Link className="pd-btn pd-btn-ghost" href="/pricing">See pricing</Link>
             </div>
             <div className="pd-trust-strip">
-              <span className="pd-trust-item"><IconCheck width={16} height={16} /> Free for up to 25 dogs</span>
+              <span className="pd-trust-item"><IconCheck width={16} height={16} /> Free for up to 30 dogs</span>
               <span className="pd-trust-item"><IconCheck width={16} height={16} /> No credit card</span>
               <span className="pd-trust-item"><IconCheck width={16} height={16} /> 2-minute setup</span>
             </div>
@@ -227,7 +227,7 @@ export default function Landing() {
           <ComparisonTable />
           <div className="pd-midcta">
             <Link className="pd-btn pd-btn-primary" href="/register">Start free in 2 minutes</Link>
-            <p className="pd-midcta-note">Up to 25 dogs on the house. No card required.</p>
+            <p className="pd-midcta-note">Up to 30 dogs on the house. No card required.</p>
           </div>
         </div>
 

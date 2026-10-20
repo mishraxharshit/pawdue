@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { computeStatus } from "../../../lib/breedIntervals";
 import { buildReminderEmail, groupByOwner } from "../../../lib/reminderEmail";
 import { sendReminderMessage, sendEmail } from "../../../lib/messaging";
+import { timingSafeEqual } from "crypto";
 import { localHour } from "../../../lib/localTime";
 
 // How many days must pass before we re-send a reminder for the same dog,
@@ -30,9 +31,20 @@ async function alertOps(subject, detail) {
 
 export default async function handler(req, res) {
   // Vercel Cron calls this with an Authorization header matching CRON_SECRET.
-  const auth = req.headers.authorization;
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized" });
+  // Fail closed: without a secret this endpoint can email every client of
+  // every groomer, so it must never be open. Only local dev may skip it.
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[cron] CRON_SECRET is not set - refusing to run");
+      return res.status(500).json({ error: "CRON_SECRET is not configured" });
+    }
+  } else {
+    const given = Buffer.from(String(req.headers.authorization || ""));
+    const want = Buffer.from(`Bearer ${secret}`);
+    if (given.length !== want.length || !timingSafeEqual(given, want)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
   }
 
   const supabase = createSupabaseAdminClient();

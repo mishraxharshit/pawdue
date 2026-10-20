@@ -18,19 +18,19 @@ export async function getServerSideProps({ req, res }) {
 const FAQ_ITEMS = [
   {
     q: "Do I need a credit card to start free?",
-    a: "No. The Free plan covers up to 25 dogs with no card required. Add a card only when you upgrade to Starter or Pro.",
+    a: "No. The Free plan covers up to 30 dogs with no card required. Add a card only when you upgrade to Starter or Pro.",
   },
   {
     q: "What happens if I go over my dog limit?",
-    a: "You'll get a heads-up in your dashboard before you hit the ceiling, and existing dogs keep getting reminders either wayyou just won't be able to add new ones until you upgrade or remove one.",
+    a: "Your dashboard shows how many dogs you have used. Existing dogs keep getting reminders either way. You just won't be able to add new ones until you upgrade or archive one.",
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Cancel from your dashboard whenever you likethere's no long-term contract, and you keep access until the end of the billing period you already paid for.",
+    a: "Yes. Cancel from your dashboard whenever you like. There's no long-term contract, and you keep access until the end of the billing period you already paid for.",
   },
   {
     q: "Which reminder channels are included?",
-    a: "Every plan sends by email today, since that works instantly with no approval wait. WhatsApp and SMS are optional backup channels you can connect any timeonce added, they slot into the send order automatically. No per-message fees on any plan.",
+    a: "Every plan sends by email today, since that works instantly with no approval wait. WhatsApp and SMS are optional backup channels you can connect any time. Once added, they slot into the send order automatically. PawDue never charges per message. If you connect WhatsApp or SMS, those providers bill you directly for their own usage.",
   },
 ];
 
@@ -94,12 +94,14 @@ export default function Pricing({ isLoggedIn }) {
             <div className="pd-price-card">
               <div className="pd-price-name">Free</div>
               <div className="pd-price-amount">$0</div>
-              <p className="pd-price-sub">Try it with a handful of clients.</p>
+              <p className="pd-price-sub">Try it with your regulars. Nothing is locked.</p>
               <ul className="pd-price-feats">
-                <li>Up to 25 dogs</li>
+                <li>Up to 30 dogs</li>
                 <li>Email reminders (WhatsApp/SMS optional)</li>
-                <li>Daily automatic sends</li>
+                <li>Sent every morning in your timezone</li>
                 <li>Owner self-booking link</li>
+                <li>CSV import and export</li>
+                <li>Calendar feed for your bookings</li>
               </ul>
               <Link className="pd-btn pd-btn-ghost" href="/register">
                 {isLoggedIn ? "Your current plan" : "Start free"}
@@ -109,13 +111,11 @@ export default function Pricing({ isLoggedIn }) {
             <div className="pd-price-card pd-price-highlight">
               <div className="pd-price-ribbon">Most popular</div>
               <div className="pd-price-name">Starter</div>
-              <div className="pd-price-amount">$49 <span>/mo</span></div>
+              <div className="pd-price-amount">$29 <span>/mo</span></div>
               <p className="pd-price-sub">For most solo groomers.</p>
               <ul className="pd-price-feats">
-                <li>Up to 75 dogs</li>
-                <li>Email reminders (WhatsApp/SMS optional)</li>
-                <li>Daily automatic sends</li>
-                <li>Owner self-booking link</li>
+                <li>Up to 200 dogs</li>
+                <li>Everything in Free</li>
                 <li>Priority message delivery</li>
               </ul>
               <button className="pd-btn pd-btn-primary" onClick={() => handleChoosePlan("starter")} disabled={loadingPlan === "starter"}>
@@ -125,15 +125,11 @@ export default function Pricing({ isLoggedIn }) {
 
             <div className="pd-price-card">
               <div className="pd-price-name">Pro</div>
-              <div className="pd-price-amount">$99 <span>/mo</span></div>
-              <p className="pd-price-sub">For busy or multi-location groomers.</p>
+              <div className="pd-price-amount">$49 <span>/mo</span></div>
+              <p className="pd-price-sub">For busy salons with a big client list.</p>
               <ul className="pd-price-feats">
                 <li>Unlimited dogs</li>
-                <li>Email reminders (WhatsApp/SMS optional)</li>
-                <li>Daily automatic sends</li>
-                <li>Owner self-booking link</li>
-                <li>Priority message delivery</li>
-                <li>Custom reminder timing (soon)</li>
+                <li>Everything in Starter</li>
               </ul>
               <button className="pd-btn pd-btn-ghost" onClick={() => handleChoosePlan("pro")} disabled={loadingPlan === "pro"}>
                 {loadingPlan === "pro" ? "Redirecting…" : "Choose Pro"}
@@ -142,7 +138,7 @@ export default function Pricing({ isLoggedIn }) {
           </div>
 
           <p className="sub" style={{ marginTop: 20, textAlign: "center" }}>
-            Prices in USD. Cancel anytime from your dashboardno long-term contract.
+            Prices in USD. Cancel anytime from your dashboard. No long-term contract.
           </p>
         </div>
 
@@ -164,8 +160,8 @@ export default function Pricing({ isLoggedIn }) {
             </div>
             <div className="pd-pc-row">
               <div>Dogs tracked</div>
-              <div>Up to 25</div>
-              <div>Up to 75</div>
+              <div>Up to 30</div>
+              <div>Up to 200</div>
               <div>Unlimited</div>
             </div>
             <div className="pd-pc-row">
@@ -181,22 +177,28 @@ export default function Pricing({ isLoggedIn }) {
               <div>✓</div>
             </div>
             <div className="pd-pc-row">
-              <div>Daily automatic sends</div>
+              <div>Sent every morning in your timezone</div>
               <div>✓</div>
               <div>✓</div>
               <div>✓</div>
             </div>
             <div className="pd-pc-row">
               <div>Priority message delivery</div>
-              <div></div>
+              <div>✕</div>
               <div>✓</div>
               <div>✓</div>
             </div>
             <div className="pd-pc-row">
-              <div>Custom reminder timing</div>
-              <div></div>
-              <div></div>
-              <div>Coming soon</div>
+              <div>CSV import and export</div>
+              <div>✓</div>
+              <div>✓</div>
+              <div>✓</div>
+            </div>
+            <div className="pd-pc-row">
+              <div>Calendar feed for bookings</div>
+              <div>✓</div>
+              <div>✓</div>
+              <div>✓</div>
             </div>
           </div>
         </div>

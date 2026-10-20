@@ -10,7 +10,7 @@ const ROWS = [
 function Cell({ ok }) {
   return (
     <span className={`pd-cmp-cell ${ok ? "yes" : "no"}`} aria-label={ok ? "Yes" : "No"}>
-      {ok ? "✓" : ""}
+      {ok ? "✓" : "✕"}
     </span>
   );
 }

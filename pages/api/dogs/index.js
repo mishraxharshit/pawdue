@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from "../../../lib/supabase/server";
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { defaultIntervalFor } from "../../../lib/breedIntervals";
 import { planLimit } from "../../../lib/plans";
+import { validateDogInput } from "../../../lib/validate";
 
 export default async function handler(req, res) {
   const supabase = createSupabaseServerClient(req, res);
@@ -19,17 +20,19 @@ export default async function handler(req, res) {
     query = showArchived ? query.eq("is_archived", true) : query.eq("is_archived", false);
 
     const { data, error } = await query;
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      console.error("dogs list failed:", error.message);
+      return res.status(500).json({ error: "Could not load dogs. Please refresh." });
+    }
     // This list changes the moment a dog is added/edited - never cache it.
     res.setHeader("Cache-Control", "no-store");
     return res.status(200).json(data);
   }
 
   if (req.method === "POST") {
-    const { dogName, ownerName, phone, breed, lastGroomDate, customWeeks, notes, ownerEmail } = req.body || {};
-    if (!dogName || !ownerName || !phone || !breed || !lastGroomDate || !ownerEmail) {
-      return res.status(400).json({ error: "dogName, ownerName, phone, breed, lastGroomDate, and ownerEmail are required" });
-    }
+    const checked = validateDogInput(req.body);
+    if (checked.error) return res.status(400).json({ error: checked.error });
+    const { dogName, ownerName, phone, breed, lastGroomDate, ownerEmail, notes, intervalWeeks } = checked.values;
 
     // Look up the user's plan (admin client because RLS only lets users read
     // their own row, but we still want this check to be reliable even if
@@ -53,7 +56,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const interval_weeks = customWeeks ? Number(customWeeks) : defaultIntervalFor(breed);
+    const interval_weeks = intervalWeeks || defaultIntervalFor(breed);
 
     const { data, error } = await supabase
       .from("dogs")
@@ -71,7 +74,10 @@ export default async function handler(req, res) {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      console.error("dogs insert failed:", error.message);
+      return res.status(500).json({ error: "Could not save this dog. Please try again." });
+    }
     return res.status(201).json(data);
   }
 

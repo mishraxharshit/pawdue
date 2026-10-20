@@ -97,7 +97,8 @@ export default function BookingPage() {
   }
 
   if (confirmed) {
-    const when = `${new Date(selectedSlot).toLocaleDateString(locale, { weekday: "long", month: "short", day: "numeric" })} ${new Date(selectedSlot).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}`;
+    const tzOpt = info?.timezone ? { timeZone: info.timezone } : {};
+    const when = `${new Date(selectedSlot).toLocaleDateString(locale, { weekday: "long", month: "short", day: "numeric", ...tzOpt })} ${new Date(selectedSlot).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", ...tzOpt })}`;
     return (
       <div className="wrap authcard">
         <div className="card">
@@ -110,7 +111,7 @@ export default function BookingPage() {
     );
   }
 
-  const grouped = groupSlotsByDay(info.slots);
+  const grouped = groupSlotsByDay(info.slots, info.timezone);
 
   return (
     <div className="wrap" style={{ maxWidth: 480 }}>
@@ -120,6 +121,9 @@ export default function BookingPage() {
         {info.status && <ClientStatusCard status={info.status} dogName={info.dogName} breed={info.breed} />}
 
         <p className="sub" style={{ marginBottom: 4, marginTop: 18 }}>{translate("booking.bookSlotFor")}</p>
+        {info.timezone && info.timezone !== "UTC" && (
+          <p className="sub" style={{ marginTop: 0, fontSize: "0.8rem" }}>Times shown in {info.timezone.replace(/_/g, " ")} time</p>
+        )}
         <p style={{ fontSize: "1.1rem", fontWeight: 700, marginTop: 0 }}>
           {info.dogName} <span style={{ fontWeight: 400, color: "var(--sub)" }}>· {info.breed}</span>
         </p>
@@ -138,7 +142,7 @@ export default function BookingPage() {
                   className={selectedSlot === iso ? "small" : "ghost small"}
                   onClick={() => setSelectedSlot(iso)}
                 >
-                  {new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
+                  {new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", ...(info.timezone ? { timeZone: info.timezone } : {}) })}
                 </button>
               ))}
             </div>

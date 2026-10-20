@@ -36,7 +36,7 @@ export default function DueDateCalculator() {
   const dueStr = comp.due.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   const statusCopy = {
-    ok: "Nothing to send yetquietly tracked in the background.",
+    ok: "Nothing to send yet. Quietly tracked in the background.",
     soon: "This is the window PawDue sends the WhatsApp reminder in.",
     overdue: "This is exactly the client PawDue would have already nudged.",
   };
