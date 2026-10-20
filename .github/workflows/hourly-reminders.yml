@@ -8,7 +8,12 @@
 # Needs two repository secrets (GitHub repo > Settings > Secrets and
 # variables > Actions > New repository secret):
 #   APP_URL      your live site, no trailing slash, e.g. https://pawdue.pet
+#                (use the exact address your site opens on: a redirect from
+#                pawdue.pet to www.pawdue.pet drops the secret and fails)
 #   CRON_SECRET  the same value as CRON_SECRET in Vercel
+#
+# This job now FAILS (red X in the Actions tab) when the endpoint does not
+# answer 200, so a broken setup can no longer look like a green success.
 name: Hourly reminder check
 
 on:
@@ -21,7 +26,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call /api/cron/send-reminders
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl --fail-with-body -sS \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.APP_URL }}/api/cron/send-reminders"
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing APP_URL or CRON_SECRET repository secret."; exit 1
+          fi
+          code=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/send-reminders")
+          echo "HTTP $code"
+          cat response.json; echo
+          if [ "$code" != "200" ]; then
+            echo "Reminder endpoint did not return 200. Check APP_URL (exact address, no redirect) and CRON_SECRET."
+            exit 1
+          fi
