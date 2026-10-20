@@ -1,61 +1,174 @@
-import { createSupabaseAdminClient } from "../../../../lib/supabase/admin";
-import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../../lib/booking";
-import { rateLimit } from "../../../../lib/rateLimit";
-import { computeStatus } from "../../../../lib/breedIntervals";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { groupSlotsByDay } from "../../lib/booking";
+import ClientStatusCard from "../../components/ClientStatusCard";
+import { useLanguage } from "../../lib/i18n/LanguageContext";
 
-export default async function handler(req, res) {
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+export default function BookingPage() {
+  const router = useRouter();
+  const { token } = router.query;
+  const { translate, locale } = useLanguage();
 
-  if (!rateLimit(req, res, { name: "booking-availability", limit: 60, windowMs: 10 * 60 * 1000 })) return;
+  const [info, setInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(null);
+  const [optingOut, setOptingOut] = useState(false);
+  const [optedOut, setOptedOut] = useState(false);
 
-  const { token } = req.query;
-  const admin = createSupabaseAdminClient();
+  useEffect(() => {
+    if (!token) return;
+    fetch(`/api/bookings/availability/${token}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error((await res.json()).error || translate("booking.couldNotLoad"));
+        return res.json();
+      })
+      .then(setInfo)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // This route is intentionally public (no login) - the booking_token itself
-  // is the "access key" a dog owner got via their reminder link.
-  const { data: dog, error } = await admin
-    .from("dogs")
-    .select("id, user_id, dog_name, owner_name, breed, last_groom_date, interval_weeks")
-    .eq("booking_token", token)
-    .maybeSingle();
-
-  if (error || !dog) {
-    if (error) console.error("bookings/availability lookup failed:", error.message);
-    return res.status(404).json({ error: "Booking link not found" });
+  async function handleConfirm() {
+    setConfirming(true);
+    setError("");
+    try {
+      const res = await fetch("/api/bookings/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, slot: selectedSlot }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || translate("booking.couldNotBook"));
+      setConfirmed(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setConfirming(false);
+    }
   }
 
-  // These three lookups do not depend on each other, so run them together
-  // instead of one after another (each is a network round trip to Supabase).
-  // Only upcoming bookings matter for availability, so old ones are skipped.
-  const [bookingsRes, settings, timezone] = await Promise.all([
-    admin.from("bookings").select("slot_at").eq("user_id", dog.user_id).gte("slot_at", new Date().toISOString()),
-    getAvailabilitySettings(admin, dog.user_id),
-    getBusinessTimezone(admin, dog.user_id),
-  ]);
+  async function handleOptOut() {
+    setOptingOut(true);
+    try {
+      const res = await fetch("/api/bookings/opt-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) throw new Error("Could not process that - please contact your groomer directly.");
+      setOptedOut(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setOptingOut(false);
+    }
+  }
 
-  const bookedIso = new Set((bookingsRes.data || []).map((b) => new Date(b.slot_at).toISOString()));
-  const slots = generateAvailableSlots(bookedIso, settings, timezone);
+  if (loading) {
+    return (
+      <div className="wrap authcard">
+        <div className="card">{translate("booking.loading")}</div>
+      </div>
+    );
+  }
 
-  // Shown on the owner's booking page too, not just the groomer's dashboard -
-  // an owner who can see "due in 9 days" understands why they got the text,
-  // and is more likely to actually pick a slot instead of ignoring the link.
-  const comp = computeStatus(dog, new Date(), timezone);
-  const elapsedDays = Math.round((new Date() - new Date(dog.last_groom_date)) / 86400000);
-  const totalDays = dog.interval_weeks * 7;
-  const progressPct = Math.max(0, Math.min(100, Math.round((elapsedDays / totalDays) * 100)));
+  if (optedOut) {
+    return (
+      <div className="wrap authcard">
+        <div className="card">
+          <h1>Paw<span>Due</span></h1>
+          <p className="sub" style={{ marginTop: 10 }}>{translate("booking.optedOutMessage")}</p>
+        </div>
+      </div>
+    );
+  }
 
-  return res.status(200).json({
-    dogName: dog.dog_name,
-    ownerName: dog.owner_name,
-    breed: dog.breed,
-    slots,
-    timezone,
-    status: {
-      state: comp.status,
-      daysLeft: comp.daysLeft,
-      dueDate: comp.due.toISOString(),
-      lastGroomDate: dog.last_groom_date,
-      progressPct,
-    },
-  });
+  if (error && !info) {
+    return (
+      <div className="wrap authcard">
+        <div className="card">
+          <h1>Paw<span>Due</span></h1>
+          <p className="error">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (confirmed) {
+    const tzOpt = info?.timezone ? { timeZone: info.timezone } : {};
+    const when = `${new Date(selectedSlot).toLocaleDateString(locale, { weekday: "long", month: "short", day: "numeric", ...tzOpt })} ${new Date(selectedSlot).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", ...tzOpt })}`;
+    return (
+      <div className="wrap authcard">
+        <div className="card">
+          <h1>Paw<span>Due</span></h1>
+          <p style={{ fontSize: "1.05rem", marginTop: 10 }}>
+            {translate("booking.confirmed", { dog: confirmed.dogName, when })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const grouped = groupSlotsByDay(info.slots, info.timezone);
+
+  return (
+    <div className="wrap" style={{ maxWidth: 480 }}>
+      <div className="card">
+        <h1>Paw<span>Due</span></h1>
+
+        {info.status && <ClientStatusCard status={info.status} dogName={info.dogName} breed={info.breed} />}
+
+        <p className="sub" style={{ marginBottom: 4, marginTop: 18 }}>{translate("booking.bookSlotFor")}</p>
+        {info.timezone && info.timezone !== "UTC" && (
+          <p className="sub" style={{ marginTop: 0, fontSize: "0.8rem" }}>Times shown in {info.timezone.replace(/_/g, " ")} time</p>
+        )}
+        <p style={{ fontSize: "1.1rem", fontWeight: 700, marginTop: 0 }}>
+          {info.dogName} <span style={{ fontWeight: 400, color: "var(--sub)" }}>· {info.breed}</span>
+        </p>
+
+        {Object.keys(grouped).length === 0 && (
+          <p className="sub">{translate("booking.noSlots")}</p>
+        )}
+
+        {Object.entries(grouped).map(([day, isoSlots]) => (
+          <div key={day} style={{ marginBottom: 14 }}>
+            <div className="sub" style={{ fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>{day}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {isoSlots.map((iso) => (
+                <button
+                  key={iso}
+                  className={selectedSlot === iso ? "small" : "ghost small"}
+                  onClick={() => setSelectedSlot(iso)}
+                >
+                  {new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", ...(info.timezone ? { timeZone: info.timezone } : {}) })}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {error && <div className="error">{error}</div>}
+
+        {selectedSlot && (
+          <button style={{ marginTop: 10 }} onClick={handleConfirm} disabled={confirming}>
+            {confirming ? translate("booking.booking") : translate("booking.confirmSlot")}
+          </button>
+        )}
+
+        <p className="sub" style={{ marginTop: 20, fontSize: ".78rem", textAlign: "center" }}>
+          {translate("booking.stopRemindersQuestion", { dog: info.dogName })}{" "}
+          <button
+            className="link"
+            style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
+            onClick={handleOptOut}
+            disabled={optingOut}
+          >
+            {optingOut ? translate("booking.processing") : translate("booking.stopReminders")}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
 }

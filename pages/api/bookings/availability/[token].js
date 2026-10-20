@@ -24,14 +24,16 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: "Booking link not found" });
   }
 
-  const { data: existingBookings } = await admin
-    .from("bookings")
-    .select("slot_at")
-    .eq("user_id", dog.user_id);
+  // These three lookups do not depend on each other, so run them together
+  // instead of one after another (each is a network round trip to Supabase).
+  // Only upcoming bookings matter for availability, so old ones are skipped.
+  const [bookingsRes, settings, timezone] = await Promise.all([
+    admin.from("bookings").select("slot_at").eq("user_id", dog.user_id).gte("slot_at", new Date().toISOString()),
+    getAvailabilitySettings(admin, dog.user_id),
+    getBusinessTimezone(admin, dog.user_id),
+  ]);
 
-  const bookedIso = new Set((existingBookings || []).map((b) => new Date(b.slot_at).toISOString()));
-  const settings = await getAvailabilitySettings(admin, dog.user_id);
-  const timezone = await getBusinessTimezone(admin, dog.user_id);
+  const bookedIso = new Set((bookingsRes.data || []).map((b) => new Date(b.slot_at).toISOString()));
   const slots = generateAvailableSlots(bookedIso, settings, timezone);
 
   // Shown on the owner's booking page too, not just the groomer's dashboard -
