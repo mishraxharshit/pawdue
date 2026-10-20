@@ -27,28 +27,28 @@ export default async function handler(req, res) {
 
   // Re-validate the slot is still free server-side - never trust the client's
   // idea of availability, since another owner could have booked it moments ago.
-  const { data: existingBookings } = await admin
-    .from("bookings")
-    .select("slot_at")
-    .eq("user_id", dog.user_id);
+  // The lookups are independent, so they run together.
+  const [bookingsRes, activeRes, settings, tz] = await Promise.all([
+    admin.from("bookings").select("slot_at").eq("user_id", dog.user_id).gte("slot_at", new Date().toISOString()),
+    // One upcoming booking per dog link. Without this, anyone holding a link
+    // could grab every free slot of the groomer.
+    admin
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("dog_id", dog.id)
+      .eq("status", "confirmed")
+      .gte("slot_at", new Date().toISOString()),
+    getAvailabilitySettings(admin, dog.user_id),
+    getBusinessTimezone(admin, dog.user_id),
+  ]);
 
-  // One upcoming booking per dog link. Without this, anyone holding a link
-  // could grab every free slot of the groomer.
-  const { count: activeForDog } = await admin
-    .from("bookings")
-    .select("id", { count: "exact", head: true })
-    .eq("dog_id", dog.id)
-    .eq("status", "confirmed")
-    .gte("slot_at", new Date().toISOString());
-  if ((activeForDog || 0) >= 1) {
+  if ((activeRes.count || 0) >= 1) {
     return res.status(409).json({
       error: "This dog already has an upcoming appointment. Please contact the groomer to change it.",
     });
   }
 
-  const bookedIso = new Set((existingBookings || []).map((b) => new Date(b.slot_at).toISOString()));
-  const settings = await getAvailabilitySettings(admin, dog.user_id);
-  const tz = await getBusinessTimezone(admin, dog.user_id);
+  const bookedIso = new Set((bookingsRes.data || []).map((b) => new Date(b.slot_at).toISOString()));
   const stillAvailable = generateAvailableSlots(bookedIso, settings, tz).includes(slot);
 
   if (!stillAvailable) {
