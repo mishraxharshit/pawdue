@@ -648,14 +648,8 @@ export default function Dashboard({ userId, userEmail }) {
           </div>
           <div className="pd-topbar-actions">
             {activeView === "dogs" && (
-              <>
-                <button className="small ghost" onClick={() => setImportOpen(true)}>Import CSV</button>
-                <button className="small ghost" onClick={() => { window.location.href = "/api/dogs/export"; }}>Export CSV</button>
-              </>
-            )}
-            {activeView === "dogs" && (
-              <button className="pd-icon-btn primary" onClick={openAddModal} aria-label="Add dog" title="Add dog">
-                <IconPlus />
+              <button className="pd-add-btn" onClick={openAddModal} aria-label="Add dog">
+                <IconPlus width={16} height={16} /> <span>Add dog</span>
               </button>
             )}
             <div className="notif-wrap" ref={notifRef}>
@@ -682,13 +676,14 @@ export default function Dashboard({ userId, userEmail }) {
             </div>
             <div className="pd-profile" ref={profileRef} onClick={() => setProfileOpen((o) => !o)}>
               <Avatar name={userEmail || "P D"} size={30} />
-              <div>
+              <div className="pd-profile-text">
                 <div className="pd-profile-name">{userEmail}</div>
                 <div className="pd-profile-sub">{billing?.planName || "Free"} plan</div>
               </div>
               <IconChevronDown width={14} height={14} />
               {profileOpen && (
                 <div className="pd-profile-dropdown">
+                  <div className="pd-profile-email">{userEmail}</div>
                   <button onClick={() => setActiveView("billing")}><IconCard /> Billing</button>
                   <Link href="/help" onClick={() => setProfileOpen(false)}><IconHelp /> Help</Link>
                   <button onClick={handleSignOut}><IconLogout /> Log out</button>
@@ -739,6 +734,11 @@ export default function Dashboard({ userId, userEmail }) {
               </div>
             </div>
 
+            <div className="pd-dogs-tools">
+              <button className="small ghost" onClick={() => setImportOpen(true)}>Import CSV</button>
+              <button className="small ghost" onClick={() => { window.location.href = "/api/dogs/export"; }}>Export CSV</button>
+            </div>
+
             <div className="pd-filterbar">
               <div className="pd-searchbox">
                 <IconSearch width={16} height={16} />
@@ -784,7 +784,7 @@ export default function Dashboard({ userId, userEmail }) {
             {!isLoading && filtered.length === 0 && (
               <div className="pd-table">
                 <div className="pd-tempty">
-                  {search ? "No dogs match your search." : "No dogs here yet. Click + to add one."}
+                  {search ? "No dogs match your search." : "No dogs here yet. Tap Add dog to add one."}
                 </div>
               </div>
             )}
@@ -802,6 +802,7 @@ export default function Dashboard({ userId, userEmail }) {
                   <div className="pd-thead-due">Next due</div>
                   <div>Status</div>
                   <div style={{ textAlign: "right" }}>Actions</div>
+                  <div className="pd-thead-selectall">Select all</div>
                 </div>
 
                 {groups.map((group) => (
@@ -810,12 +811,11 @@ export default function Dashboard({ userId, userEmail }) {
                     {group.rows.map(({ dog, comp }) => (
                       <div key={dog.id}>
                         <div className="pd-trow">
-                          <input type="checkbox" checked={selectedIds.has(dog.id)} onChange={() => toggleSelect(dog.id)} />
+                          <input className="pd-tcheck" type="checkbox" checked={selectedIds.has(dog.id)} onChange={() => toggleSelect(dog.id)} aria-label={`Select ${dog.dog_name}`} />
                           <div className="pd-tcell-dog">
                             <Avatar name={dog.dog_name} size={32} />
                             <div style={{ minWidth: 0 }}>
                               <div className="pd-tcell-dog-name">
-                                {comp.status === "overdue" && <span className="dot blink" />}
                                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dog.dog_name}</span>
                                 {dog.opted_out && <span className="tag-muted">🔕</span>}
                               </div>
@@ -832,21 +832,21 @@ export default function Dashboard({ userId, userEmail }) {
                               {comp.daysLeft < 0 ? `${Math.abs(comp.daysLeft)}d overdue` : `${comp.daysLeft}d left`}
                             </div>
                           </div>
-                          <div>
+                          <div className="pd-tcell-status">
                             <span className={`badge ${comp.status}`}>{STATUS_LABEL[comp.status]}</span>
                           </div>
                           <div className="pd-tcell-actions">
-                            <button className="pd-row-action" title="Preview reminder" onClick={() => setOpenMsgId(openMsgId === dog.id ? null : dog.id)}>
-                              <IconMessage />
+                            <button className="pd-row-action" title="Preview the reminder email" onClick={() => setOpenMsgId(openMsgId === dog.id ? null : dog.id)}>
+                              <IconMessage /><span>Preview</span>
                             </button>
-                            <button className="pd-row-action" title="Mark groomed today" onClick={() => markGroomed(dog)} disabled={busyId === dog.id}>
-                              <IconCheck />
+                            <button className="pd-row-action is-primary" title="Mark groomed today" onClick={() => markGroomed(dog)} disabled={busyId === dog.id}>
+                              <IconCheck /><span>Groomed</span>
                             </button>
-                            <button className="pd-row-action" title="Edit" onClick={() => openEditModal(dog)} disabled={busyId === dog.id}>
-                              <IconPencil />
+                            <button className="pd-row-action" title="Edit this dog" onClick={() => openEditModal(dog)} disabled={busyId === dog.id}>
+                              <IconPencil /><span>Edit</span>
                             </button>
-                            <button className="pd-row-action" title="Archive" onClick={() => archiveDog(dog)} disabled={busyId === dog.id}>
-                              <IconArchive />
+                            <button className="pd-row-action" title="Archive this dog" onClick={() => archiveDog(dog)} disabled={busyId === dog.id}>
+                              <IconArchive /><span>Archive</span>
                             </button>
                           </div>
                         </div>
@@ -921,13 +921,13 @@ export default function Dashboard({ userId, userEmail }) {
               <div className="pd-tempty">No archived dogs.</div>
             ) : (
               <>
-                <div className="pd-trow pd-thead" style={{ gridTemplateColumns: "2fr 1.6fr 72px" }}>
+                <div className="pd-trow pd-thead pd-trow-arch">
                   <div>Dog</div>
                   <div className="pd-thead-owner">Owner</div>
                   <div style={{ textAlign: "right" }}>Actions</div>
                 </div>
                 {archivedDogs.map((dog) => (
-                  <div className="pd-trow" style={{ gridTemplateColumns: "2fr 1.6fr 72px" }} key={dog.id}>
+                  <div className="pd-trow pd-trow-arch" key={dog.id}>
                     <div className="pd-tcell-dog">
                       <Avatar name={dog.dog_name} size={32} />
                       <div>
@@ -938,10 +938,10 @@ export default function Dashboard({ userId, userEmail }) {
                     <div className="pd-tcell-owner">{dog.owner_name}</div>
                     <div className="pd-tcell-actions">
                       <button className="pd-row-action" title="Restore" onClick={() => restoreDog(dog)} disabled={busyId === dog.id}>
-                        <IconRestore />
+                        <IconRestore /><span>Restore</span>
                       </button>
                       <button className="pd-row-action" title="Delete permanently" onClick={() => deleteDog(dog)} disabled={busyId === dog.id}>
-                        <IconTrash />
+                        <IconTrash /><span>Delete</span>
                       </button>
                     </div>
                   </div>
