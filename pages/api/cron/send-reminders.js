@@ -48,6 +48,10 @@ export default async function handler(req, res) {
   const parsedSendHour = rawSendHour ? Number(rawSendHour) : null;
   const sendHourValid = Number.isInteger(parsedSendHour) && parsedSendHour >= 0 && parsedSendHour <= 23;
   const gateByHour = sendHourValid && req.query.force !== "1";
+  // ?dryRun=1 sends nothing and writes nothing. It shows, per groomer, what
+  // timezone the job sees, what local hour it is for them right now, and which
+  // dogs would be emailed. Use it to answer "why did nobody get an email?".
+  const dryRun = req.query.dryRun === "1";
 
   try {
     // Service-role client bypasses RLS on purpose here - this job needs to
@@ -99,6 +103,11 @@ export default async function handler(req, res) {
       failed: 0,
       notSendHour: 0,
       skipReasons: { optedOut: 0, alreadyBooked: 0, notDueYet: 0, cooldown: 0 },
+      serverTimeUtc: now.toISOString(),
+      sendHour: sendHourValid ? parsedSendHour : null,
+      sendWindowHours: SEND_WINDOW_HOURS,
+      dryRun,
+      groomers: {},
       mode: gateByHour ? `hourly (sending at ${parsedSendHour}:00 local time)` : "send to all due dogs",
       details: [],
     };
@@ -121,6 +130,15 @@ export default async function handler(req, res) {
       }
 
       const timezone = timezoneByUser.get(dog.user_id) || "UTC";
+      if (!results.groomers[dog.user_id]) {
+        const lh = localHour(now, timezone);
+        results.groomers[dog.user_id] = {
+          timezone,
+          timezoneSaved: timezoneByUser.has(dog.user_id),
+          localHourNow: lh,
+          inSendWindow: sendHourValid ? (lh - parsedSendHour + 24) % 24 < SEND_WINDOW_HOURS : true,
+        };
+      }
 
       // Send during a window that starts at the send hour (not only inside that
       // exact hour), because GitHub's scheduler can run late. The 5-day cooldown
@@ -149,6 +167,16 @@ export default async function handler(req, res) {
       }
 
       dueEntries.push({ dog, comp });
+    }
+
+    if (dryRun) {
+      results.wouldSend = groupByOwner(dueEntries).map((g) => ({
+        dogs: g.map((x) => x.dog.dog_name),
+        status: g.map((x) => x.comp.status),
+        hasEmail: !!g[0].dog.owner_email,
+        timezone: timezoneByUser.get(g[0].dog.user_id) || "UTC",
+      }));
+      return res.status(200).json(results);
     }
 
     // One message per owner: a client with three dogs gets one email listing
