@@ -106,6 +106,7 @@ export default function Landing() {
               <span>Shown in your Lapsed list so you can send a personal message.</span>
             </div>
           </div>
+          <p className={s.credit}>Photos and footage on this page are illustrative stock, not PawDue customers.</p>
         </section>
 
         {/* EMPATHY: say their problem back to them in their words. */}
@@ -261,7 +262,7 @@ export default function Landing() {
               <div className={s.kicker}>Try the real thing</div>
               <h2 className={s.h2}>Pick a breed. See when PawDue would send the reminder.</h2>
               <p className={s.p}>This is the same date maths PawDue uses for every dog in your list.</p>
-              <div className="pd-landing" style={{ marginTop: 28, background: "transparent" }}><DueDateCalculator /></div>
+              <div className="pd-landing" style={{ marginTop: 28, background: "transparent", fontFamily: "inherit" }}><DueDateCalculator /></div>
             </Reveal>
             <Reveal className={s.collage} delay={120}>
               <img src="/media/maltese-800.jpg" alt="A freshly groomed white Maltese" loading="lazy" />
@@ -342,7 +343,7 @@ export default function Landing() {
               <div className={s.kicker}>Questions</div>
               <h2 className={s.h2}>Before you start</h2>
             </div>
-            <div className={`${s.faq} pd-landing`} style={{ background: "transparent" }}><Faq items={FAQ_ITEMS} /></div>
+            <div className={`${s.faq} pd-landing`} style={{ background: "transparent", fontFamily: "inherit" }}><Faq items={FAQ_ITEMS} /></div>
           </div>
         </section>
 
@@ -357,7 +358,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <div className="pd-landing"><SiteFooter /></div>
+      <div className="pd-landing" style={{ fontFamily: "inherit" }}><SiteFooter /></div>
     </div>
   );
 }
