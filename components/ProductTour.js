@@ -11,7 +11,7 @@ import { IconPaw, IconCheck } from "./icons";
 const STEP_MS = 6500;
 
 const STEPS = [
-  { tab: "Sign up", title: "Create your account", text: "Business name, email, password. About two minutes, no card." },
+  { tab: "Sign up", title: "Create your account", text: "Business name, email, password. A few minutes, no card." },
   { tab: "Set up", title: "Set your price and timezone", text: "PawDue uses them for send timing and to estimate the revenue you bring back." },
   { tab: "Add a dog", title: "Add your first dog", text: "Pick the breed and PawDue sets the rebook cycle. You can change it for any dog." },
   { tab: "The clock", title: "PawDue watches the calendar", text: "Every dog moves from On track to Due soon to Overdue on its own." },

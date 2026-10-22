@@ -1,7 +1,7 @@
 const ROWS = [
-  { label: "Knows each breed's grooming cycle", pd: true, sheet: false, notes: false },
+  { label: "Starts each dog on a breed-based cycle", pd: true, sheet: false, notes: false },
   { label: "Sends the reminder automatically", pd: true, sheet: false, notes: false },
-  { label: "Sends by email instantly, WhatsApp/SMS optional add-ons", pd: true, sheet: false, notes: false },
+  { label: "Emails the owner for you, with a booking link", pd: true, sheet: false, notes: false },
   { label: "Owner can rebook from the message", pd: true, sheet: false, notes: false },
   { label: "Works if you forget to check it", pd: true, sheet: false, notes: false },
   { label: "Free to start", pd: true, sheet: true, notes: true },
