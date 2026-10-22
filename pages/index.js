@@ -106,7 +106,6 @@ export default function Landing() {
               <span>Shown in your Lapsed list so you can send a personal message.</span>
             </div>
           </div>
-          <p className={s.credit}>Photos and footage on this page are illustrative stock, not PawDue customers.</p>
         </section>
 
         {/* EMPATHY: say their problem back to them in their words. */}
