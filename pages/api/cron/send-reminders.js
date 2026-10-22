@@ -1,13 +1,13 @@
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { computeStatus } from "../../../lib/breedIntervals";
 import { buildReminderEmail, groupByOwner } from "../../../lib/reminderEmail";
-import { sendReminderMessage, sendEmail } from "../../../lib/messaging";
+import { sendReminderMessage, sendEmail, backupChannelsConfigured } from "../../../lib/messaging";
 import { timingSafeEqual } from "crypto";
 import { localHour } from "../../../lib/localTime";
+import { planReminder } from "../../../lib/reminderPlan";
 
-// How many days must pass before we re-send a reminder for the same dog,
-// so people aren't texted every single day while overdue.
-const REMINDER_COOLDOWN_DAYS = 5;
+// Reminder rules (max 3 per grooming cycle, spacing, retry after a failure)
+// live in lib/reminderPlan.js.
 
 // Reminders go out any time in the first N local hours after REMINDER_SEND_HOUR.
 const SEND_WINDOW_HOURS = 6;
@@ -114,7 +114,7 @@ export default async function handler(req, res) {
       skipped: 0,
       failed: 0,
       notSendHour: 0,
-      skipReasons: { optedOut: 0, alreadyBooked: 0, notDueYet: 0, cooldown: 0 },
+      skipReasons: { optedOut: 0, alreadyBooked: 0, notDueYet: 0, cooldown: 0, limitReached: 0, retryWait: 0, lapsed: 0, gaveUp: 0, noContact: 0 },
       serverTimeUtc: now.toISOString(),
       sendHour: sendHourValid ? parsedSendHour : null,
       sendWindowHours: SEND_WINDOW_HOURS,
@@ -141,6 +141,14 @@ export default async function handler(req, res) {
         continue;
       }
 
+      // No owner email and no WhatsApp/SMS set up: nothing can reach this owner.
+      // Skip quietly instead of failing (and alerting) every single day.
+      if (!dog.owner_email && !backupChannelsConfigured()) {
+        results.skipReasons.noContact++;
+        results.skipped++;
+        continue;
+      }
+
       const timezone = timezoneByUser.get(dog.user_id) || "UTC";
       if (!results.groomers[dog.user_id]) {
         const lh = localHour(now, timezone);
@@ -153,8 +161,8 @@ export default async function handler(req, res) {
       }
 
       // Send during a window that starts at the send hour (not only inside that
-      // exact hour), because GitHub's scheduler can run late. The 5-day cooldown
-      // below stops a dog from being emailed twice.
+      // exact hour), because GitHub's scheduler can run late. The spacing rule
+      // in lib/reminderPlan.js stops a dog from being emailed twice.
       const hoursPastSendHour = (localHour(now, timezone) - parsedSendHour + 24) % 24;
       if (gateByHour && hoursPastSendHour >= SEND_WINDOW_HOURS) {
         results.notSendHour++;
@@ -163,20 +171,13 @@ export default async function handler(req, res) {
 
       const comp = computeStatus(dog, now, timezone);
 
-      if (comp.status === "ok") {
-        results.skipReasons.notDueYet++;
+      const plan = planReminder(dog, comp, now);
+      if (!plan.send) {
+        results.skipReasons[plan.reason] = (results.skipReasons[plan.reason] || 0) + 1;
         results.skipped++;
         continue;
       }
-
-      if (dog.last_reminder_sent_at) {
-        const daysSinceLastReminder = (now - new Date(dog.last_reminder_sent_at)) / (1000 * 60 * 60 * 24);
-        if (daysSinceLastReminder < REMINDER_COOLDOWN_DAYS) {
-          results.skipReasons.cooldown++;
-          results.skipped++;
-          continue;
-        }
-      }
+      comp.plan = plan;
 
       dueEntries.push({ dog, comp });
     }
@@ -185,6 +186,7 @@ export default async function handler(req, res) {
       results.wouldSend = groupByOwner(dueEntries).map((g) => ({
         dogs: g.map((x) => x.dog.dog_name),
         status: g.map((x) => x.comp.status),
+        stage: g.map((x) => x.comp.plan?.stage ?? null),
         hasEmail: !!g[0].dog.owner_email,
         timezone: timezoneByUser.get(g[0].dog.user_id) || "UTC",
       }));
@@ -209,24 +211,45 @@ export default async function handler(req, res) {
           whatsappParams,
         });
         for (const { dog, comp } of group) {
-          await supabase
-            .from("dogs")
-            .update({
-              last_reminder_sent_at: now.toISOString(),
-              last_reminder_stage: comp.status,
-              last_reminder_channel: channel,
-              last_reminder_result: "sent",
-            })
-            .eq("id", dog.id);
+          const sentUpdate = {
+            last_reminder_sent_at: now.toISOString(),
+            last_reminder_stage: comp.status,
+            last_reminder_channel: channel,
+            last_reminder_result: "sent",
+          };
+          if (comp.plan?.newCount != null) {
+            sentUpdate.reminder_count = comp.plan.newCount;
+            sentUpdate.reminder_cycle_date = comp.plan.cycleDate;
+            sentUpdate.reminder_fail_count = 0;
+          }
+          let { error: updErr } = await supabase.from("dogs").update(sentUpdate).eq("id", dog.id);
+          if (updErr && comp.plan?.newCount != null) {
+            // SQL migration not run yet: still record the send without the counter.
+            delete sentUpdate.reminder_count;
+            delete sentUpdate.reminder_cycle_date;
+            delete sentUpdate.reminder_fail_count;
+            await supabase.from("dogs").update(sentUpdate).eq("id", dog.id);
+          }
           results.sent++;
           results.details.push({ dogId: dog.id, dogName: dog.dog_name, channel, status: comp.status, groupedWith: group.length - 1 });
         }
       } catch (err) {
-        for (const { dog } of group) {
-          await supabase
-            .from("dogs")
-            .update({ last_reminder_sent_at: now.toISOString(), last_reminder_result: "failed" })
-            .eq("id", dog.id);
+        for (const { dog, comp } of group) {
+          // Count the failed try (max 3 per cycle, see lib/reminderPlan.js) but
+          // do not advance the reminder number: the same reminder is retried.
+          const failUpdate = { last_reminder_sent_at: now.toISOString(), last_reminder_result: "failed" };
+          if (comp.plan?.cycleDate) {
+            failUpdate.reminder_cycle_date = comp.plan.cycleDate;
+            failUpdate.reminder_count = comp.plan.count;
+            failUpdate.reminder_fail_count = (comp.plan.failCount || 0) + 1;
+          }
+          const { error: failErr } = await supabase.from("dogs").update(failUpdate).eq("id", dog.id);
+          if (failErr && comp.plan?.cycleDate) {
+            await supabase
+              .from("dogs")
+              .update({ last_reminder_sent_at: now.toISOString(), last_reminder_result: "failed" })
+              .eq("id", dog.id);
+          }
           results.failed++;
           results.details.push({ dogId: dog.id, dogName: dog.dog_name, error: err.message });
         }

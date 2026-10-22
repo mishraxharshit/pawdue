@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#f6f5f1" />
-        <meta name="description" content="PawDue tracks each dog's breed-specific grooming cycle and sends WhatsApp/SMS reminders automatically, so no client quietly drifts away." />
+        <meta name="description" content="PawDue tracks each dog's breed-specific grooming cycle and emails owners a reminder with a booking link when a dog is due, so regulars do not quietly drift away." />
         {/* Inline SVG favicon - the same paw + "due" mark used in the nav/footer, so the tab icon matches the brand without a separate image asset. */}
         <link
           rel="icon"

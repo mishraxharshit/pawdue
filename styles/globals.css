@@ -1229,3 +1229,19 @@ button.small { padding: 6px 10px; font-size: .78rem; }
   .pd-tcell-actions .pd-row-action svg { width: 16px; height: 16px; }
 }
 .pd-tcell-actions .pd-row-action span { overflow: hidden; text-overflow: ellipsis; }
+
+/* Lapsed clients: more than 30 days overdue, no automatic reminders. */
+.badge.lapsed { background: rgba(107,98,89,.16); color: #5a5148; }
+.pd-stat-chip.lapsed .pd-stat-chip-num { color: #5a5148; }
+.pd-lapsed-note { font-size: .78rem; color: var(--sub); padding: 6px 4px 10px; line-height: 1.4; }
+
+/* Clickable status chips, lapsed bell line and the WhatsApp message box. */
+.pd-stat-chip { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.pd-stat-chip:hover { border-color: var(--accent); }
+.pd-stat-chip.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(184,70,31,.18); }
+.pd-stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.notif-lapsed { display: block; width: 100%; text-align: left; background: transparent; border: none; border-top: 1px solid var(--line); padding: 10px 14px; font-size: .78rem; color: #5a5148; cursor: pointer; font-family: inherit; }
+.notif-lapsed:hover { background: rgba(107,98,89,.08); }
+.pd-wa-box { padding-bottom: 4px; }
+.pd-wa-btn { display: inline-block; background: #1f8f5a; color: #fff; text-decoration: none; font-weight: 700; font-size: .84rem; padding: 9px 16px; border-radius: 10px; }
+.pd-wa-btn:hover { opacity: .92; }

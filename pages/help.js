@@ -4,7 +4,7 @@ import Faq from "../components/Faq";
 
 const TOPICS = [
   { icon: "🐾", title: "Adding your first dog", body: "Log a dog's name, breed, owner contact, and last groom date to start tracking it." },
-  { icon: "💬", title: "How reminders send", body: "Every morning at your local time, PawDue emails the owner of each dog that is due. WhatsApp and SMS are optional backup channels you can connect any time." },
+  { icon: "💬", title: "How reminders send", body: "Every morning at your local time, PawDue emails the owner of each dog that is due. WhatsApp and SMS backups are coming soon." },
   { icon: "📅", title: "Changing a due date", body: "Open a dog's record from your dashboard to adjust its interval or last-groom date any time." },
   { icon: "🔗", title: "The booking link", body: "Every reminder includes a link the owner can use to request a rebooking slot directly." },
   { icon: "💳", title: "Plans & billing", body: "See what's included on each plan and manage your subscription from the dashboard." },
@@ -14,7 +14,7 @@ const TOPICS = [
 const FAQ_ITEMS = [
   {
     q: "A reminder didn't go out. What happened?",
-    a: "PawDue sends by email first, since it needs no approval and works immediately. WhatsApp and SMS are optional backups you can connect any time; once added, they're used automatically if email fails. Check your dashboard for a delivery note on any dog, or reach out via the feedback page.",
+    a: "PawDue sends by email first, since it needs no approval and works immediately. WhatsApp and SMS backups are coming soon and will be used only if email cannot reach the owner. Check your dashboard for a delivery note on any dog, or reach out via the feedback page.",
   },
   {
     q: "Can I add a dog manually with a custom interval instead of the breed default?",

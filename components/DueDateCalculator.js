@@ -37,7 +37,7 @@ export default function DueDateCalculator() {
 
   const statusCopy = {
     ok: "Nothing to send yet. Quietly tracked in the background.",
-    soon: "This is the window PawDue sends the WhatsApp reminder in.",
+    soon: "This is the window PawDue sends the reminder in.",
     overdue: "This is exactly the client PawDue would have already nudged.",
   };
 

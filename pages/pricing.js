@@ -30,7 +30,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Which reminder channels are included?",
-    a: "Every plan sends by email today, since that works instantly with no approval wait. WhatsApp and SMS are optional backup channels you can connect any time. Once added, they slot into the send order automatically. PawDue never charges per message. If you connect WhatsApp or SMS, those providers bill you directly for their own usage.",
+    a: "Every plan sends by email today, since that works instantly with no approval wait. WhatsApp and SMS backups are coming soon. PawDue does not charge per message today, and we will tell you before anything about pricing changes.",
   },
 ];
 
@@ -97,7 +97,7 @@ export default function Pricing({ isLoggedIn }) {
               <p className="pd-price-sub">Try it with your regulars. Nothing is locked.</p>
               <ul className="pd-price-feats">
                 <li>Up to 30 dogs</li>
-                <li>Email reminders (WhatsApp/SMS optional)</li>
+                <li>Email reminders (WhatsApp backup coming soon)</li>
                 <li>Sent every morning in your timezone</li>
                 <li>Owner self-booking link</li>
                 <li>CSV import and export</li>
@@ -165,7 +165,7 @@ export default function Pricing({ isLoggedIn }) {
               <div>Unlimited</div>
             </div>
             <div className="pd-pc-row">
-              <div>Email reminders (WhatsApp/SMS optional)</div>
+              <div>Email reminders (WhatsApp backup coming soon)</div>
               <div>✓</div>
               <div>✓</div>
               <div>✓</div>

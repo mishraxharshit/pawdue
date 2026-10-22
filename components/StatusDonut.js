@@ -2,16 +2,17 @@ const SEGMENTS = [
   { key: "overdue", label: "Overdue", color: "var(--overdue)" },
   { key: "soon", label: "Due soon", color: "var(--warn)" },
   { key: "ok", label: "On track", color: "var(--ok)" },
+  { key: "lapsed", label: "Lapsed", color: "#9a9087" },
 ];
 
 export default function StatusDonut({ counts }) {
-  const total = counts.overdue + counts.soon + counts.ok;
+  const total = counts.overdue + counts.soon + counts.ok + (counts.lapsed || 0);
   const radius = 46;
   const circumference = 2 * Math.PI * radius;
 
   let offset = 0;
   const arcs = total === 0 ? [] : SEGMENTS.map((seg) => {
-    const value = counts[seg.key];
+    const value = counts[seg.key] || 0;
     const length = (value / total) * circumference;
     const arc = { ...seg, value, length, offset };
     offset += length;
@@ -43,7 +44,7 @@ export default function StatusDonut({ counts }) {
           {SEGMENTS.map((seg) => (
             <div className="pd-donut-legend-item" key={seg.key}>
               <span className="pd-donut-dot" style={{ background: seg.color }} />
-              {seg.label} <b>{counts[seg.key]}</b>
+              {seg.label} <b>{counts[seg.key] || 0}</b>
             </div>
           ))}
         </div>

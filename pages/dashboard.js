@@ -4,6 +4,8 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 import { createSupabaseBrowserClient } from "../lib/supabase/client";
 import { BREED_INTERVALS, computeStatus } from "../lib/breedIntervals";
+import { LAPSED_AFTER_DAYS } from "../lib/reminderPlan";
+import { whatsappUrl, manualMessageText } from "../lib/manualMessage";
 import { buildReminderEmail } from "../lib/reminderEmail";
 import Avatar from "../components/Avatar";
 import DogModal from "../components/DogModal";
@@ -56,8 +58,11 @@ const emptyForm = {
   notes: "",
 };
 
-const STATUS_LABEL = { overdue: "Overdue", soon: "Due soon", ok: "On track" };
-const STATUS_ORDER = ["overdue", "soon", "ok"];
+const STATUS_LABEL = { overdue: "Overdue", soon: "Due soon", ok: "On track", lapsed: "Lapsed" };
+const STATUS_ORDER = ["overdue", "soon", "ok", "lapsed"];
+// A dog overdue by more than this many days is "lapsed": no automatic reminders
+// go out any more (see lib/reminderPlan.js), so the groomer should reach out.
+const LAPSED_HINT = `More than ${LAPSED_AFTER_DAYS} days overdue. PawDue stops sending automatic reminders, so message this client yourself.`;
 
 const COMMON_TIMEZONES = [
   "UTC",
@@ -453,6 +458,26 @@ export default function Dashboard({ userId, userEmail }) {
     showToast("Reminder text copied ✓");
   }
 
+  // Hand-written message for the "Message" panel: opens the groomer's own
+  // WhatsApp with the text typed. Used for lapsed clients and anyone you want to nudge.
+  function manualMessage(dog, comp, view) {
+    const base = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+    const text = manualMessageText({
+      dog,
+      view,
+      businessName: profile.businessName,
+      dueLabel: comp.due.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      bookingUrl: dog.booking_token && base ? `${base}/book/${dog.booking_token}` : "",
+    });
+    return { text, url: whatsappUrl(dog.phone, text) };
+  }
+
+  function showLapsed() {
+    setActiveView("dogs");
+    setFilter("lapsed");
+    setNotifOpen(false);
+  }
+
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
@@ -518,15 +543,20 @@ export default function Dashboard({ userId, userEmail }) {
     setBusyId(null);
   }
 
-  const withComp = dogs.map((d) => ({ dog: d, comp: computeStatus(d, new Date(), timezone) }));
-  const counts = { overdue: 0, soon: 0, ok: 0 };
-  withComp.forEach((x) => counts[x.comp.status]++);
+  const withComp = dogs.map((d) => {
+    const comp = computeStatus(d, new Date(), timezone);
+    // "view" is what the groomer sees: overdue turns into lapsed after 30 days.
+    const view = comp.status === "overdue" && comp.daysLeft < -LAPSED_AFTER_DAYS ? "lapsed" : comp.status;
+    return { dog: d, comp, view };
+  });
+  const counts = { overdue: 0, soon: 0, ok: 0, lapsed: 0 };
+  withComp.forEach((x) => counts[x.view]++);
 
   const needsAttention = [...withComp]
-    .filter((x) => x.comp.status !== "ok")
+    .filter((x) => x.view === "overdue" || x.view === "soon")
     .sort((a, b) => a.comp.daysLeft - b.comp.daysLeft);
 
-  let filtered = filter === "all" ? withComp : withComp.filter((x) => x.comp.status === filter);
+  let filtered = filter === "all" ? withComp : withComp.filter((x) => x.view === filter);
   if (search.trim()) {
     const q = search.trim().toLowerCase();
     const qDigits = q.replace(/\D/g, "");
@@ -550,7 +580,7 @@ export default function Dashboard({ userId, userEmail }) {
       .map((status) => ({
         key: status,
         label: STATUS_LABEL[status],
-        rows: filtered.filter((x) => x.comp.status === status).sort((a, b) => a.comp.daysLeft - b.comp.daysLeft),
+        rows: filtered.filter((x) => x.view === status).sort((a, b) => a.comp.daysLeft - b.comp.daysLeft),
       }))
       .filter((g) => g.rows.length > 0);
   }, [filtered, groupBy]);
@@ -671,6 +701,11 @@ export default function Dashboard({ userId, userEmail }) {
                       <button className="notif-quick" onClick={() => markGroomed(dog)}>Groomed</button>
                     </div>
                   ))}
+                  {counts.lapsed > 0 && (
+                    <button className="notif-lapsed" onClick={showLapsed}>
+                      {counts.lapsed} lapsed client{counts.lapsed === 1 ? "" : "s"} (no auto reminders). Tap to view
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -714,24 +749,32 @@ export default function Dashboard({ userId, userEmail }) {
             <RevenueBanner />
 
             <div className="pd-stat-chips">
-              <div className="pd-stat-chip overdue">
+              <div className={`pd-stat-chip overdue ${filter === "overdue" ? "is-active" : ""}`} role="button" tabIndex={0} onClick={() => setFilter(filter === "overdue" ? "all" : "overdue")} onKeyDown={(e) => e.key === "Enter" && setFilter(filter === "overdue" ? "all" : "overdue")}>
                 <div>
                   <div className="pd-stat-chip-num">{counts.overdue}</div>
                   <div className="pd-stat-chip-label">Overdue</div>
                 </div>
               </div>
-              <div className="pd-stat-chip soon">
+              <div className={`pd-stat-chip soon ${filter === "soon" ? "is-active" : ""}`} role="button" tabIndex={0} onClick={() => setFilter(filter === "soon" ? "all" : "soon")} onKeyDown={(e) => e.key === "Enter" && setFilter(filter === "soon" ? "all" : "soon")}>
                 <div>
                   <div className="pd-stat-chip-num">{counts.soon}</div>
                   <div className="pd-stat-chip-label">Due soon</div>
                 </div>
               </div>
-              <div className="pd-stat-chip ok">
+              <div className={`pd-stat-chip ok ${filter === "ok" ? "is-active" : ""}`} role="button" tabIndex={0} onClick={() => setFilter(filter === "ok" ? "all" : "ok")} onKeyDown={(e) => e.key === "Enter" && setFilter(filter === "ok" ? "all" : "ok")}>
                 <div>
                   <div className="pd-stat-chip-num">{counts.ok}</div>
                   <div className="pd-stat-chip-label">On track</div>
                 </div>
               </div>
+              {counts.lapsed > 0 && (
+                <div className={`pd-stat-chip lapsed ${filter === "lapsed" ? "is-active" : ""}`} role="button" tabIndex={0} title={LAPSED_HINT} onClick={() => setFilter(filter === "lapsed" ? "all" : "lapsed")} onKeyDown={(e) => e.key === "Enter" && setFilter(filter === "lapsed" ? "all" : "lapsed")}>
+                  <div>
+                    <div className="pd-stat-chip-num">{counts.lapsed}</div>
+                    <div className="pd-stat-chip-label">Lapsed (no auto reminders)</div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pd-dogs-tools">
@@ -750,6 +793,7 @@ export default function Dashboard({ userId, userEmail }) {
                   <option value="overdue">Overdue</option>
                   <option value="soon">Due soon</option>
                   <option value="ok">On track</option>
+                  <option value="lapsed">Lapsed</option>
                 </select>
                 <IconChevronDown width={14} height={14} />
               </div>
@@ -808,7 +852,8 @@ export default function Dashboard({ userId, userEmail }) {
                 {groups.map((group) => (
                   <div key={group.key}>
                     {group.label && <div className="pd-trow-group">{group.label} · {group.rows.length}</div>}
-                    {group.rows.map(({ dog, comp }) => (
+                    {group.key === "lapsed" && <div className="pd-lapsed-note">{LAPSED_HINT}</div>}
+                    {group.rows.map(({ dog, comp, view }) => (
                       <div key={dog.id}>
                         <div className="pd-trow">
                           <input className="pd-tcheck" type="checkbox" checked={selectedIds.has(dog.id)} onChange={() => toggleSelect(dog.id)} aria-label={`Select ${dog.dog_name}`} />
@@ -833,11 +878,11 @@ export default function Dashboard({ userId, userEmail }) {
                             </div>
                           </div>
                           <div className="pd-tcell-status">
-                            <span className={`badge ${comp.status}`}>{STATUS_LABEL[comp.status]}</span>
+                            <span className={`badge ${view}`} title={view === "lapsed" ? LAPSED_HINT : undefined}>{STATUS_LABEL[view]}</span>
                           </div>
                           <div className="pd-tcell-actions">
-                            <button className="pd-row-action" title="Preview the reminder email" onClick={() => setOpenMsgId(openMsgId === dog.id ? null : dog.id)}>
-                              <IconMessage /><span>Preview</span>
+                            <button className="pd-row-action" title="Preview the reminder email or message the owner on WhatsApp" onClick={() => setOpenMsgId(openMsgId === dog.id ? null : dog.id)}>
+                              <IconMessage /><span>Message</span>
                             </button>
                             <button className="pd-row-action is-primary" title="Mark groomed today" onClick={() => markGroomed(dog)} disabled={busyId === dog.id}>
                               <IconCheck /><span>Groomed</span>
@@ -852,6 +897,26 @@ export default function Dashboard({ userId, userEmail }) {
                         </div>
                         {openMsgId === dog.id && (
                           <div className="msgbox" style={{ margin: "0 16px 12px" }}>
+                            {(() => {
+                              const m = manualMessage(dog, comp, view);
+                              return (
+                                <div className="pd-wa-box">
+                                  <div style={{ fontWeight: 700, marginBottom: 6 }}>Message on WhatsApp</div>
+                                  {dog.opted_out ? (
+                                    <p className="sub" style={{ margin: 0 }}>This owner opted out of reminders, so please do not message them.</p>
+                                  ) : !m.url ? (
+                                    <p className="sub" style={{ margin: 0 }}>Add the country code to this phone number (like +1 or +91) to message on WhatsApp.</p>
+                                  ) : (
+                                    <>
+                                      <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{m.text}</div>
+                                      <a className="pd-wa-btn" href={m.url} target="_blank" rel="noopener noreferrer">Open WhatsApp</a>
+                                      <span className="sub" style={{ marginLeft: 10, fontSize: ".74rem" }}>Opens your own WhatsApp with this text ready. You press send.</span>
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                            <div style={{ fontWeight: 700, margin: "16px 0 6px" }}>Reminder email preview</div>
                             <div style={{ fontWeight: 700, marginBottom: 6 }}>Subject: {previewEmail(dog, comp).subject}</div>
                             <div style={{ whiteSpace: "pre-wrap" }}>{previewEmail(dog, comp).text}</div>
                             <div style={{ marginTop: 10 }}>
