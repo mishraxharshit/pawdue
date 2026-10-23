@@ -196,7 +196,7 @@
 
 .pull { position: relative; margin: 36px 0 0; padding: 38px 30px 30px; background: var(--pine); color: #fff; border-radius: 24px; font-size: clamp(1.2rem, 2.2vw, 1.55rem); line-height: 1.4; font-weight: 700; letter-spacing: -0.015em; box-shadow: 0 24px 40px -28px rgba(29,69,54,.7); }
 .pull mark { background: none; color: #F0C27F; box-shadow: inset 0 -.32em 0 rgba(201,138,61,.45); }
-.pullMark { position: absolute; top: -6px; left: 22px; font-size: 5rem; line-height: 1; color: var(--brass); font-family: Georgia, serif; }
+.pullMark { position: absolute; top: 10px; left: 22px; font-size: 4rem; line-height: 1; color: var(--brass); font-family: Georgia, serif; }
 
 .pillLogo { display: inline-flex; }
 .pillLogo svg { animation: pawTilt 5s ease-in-out infinite; transform-origin: 50% 60%; }
