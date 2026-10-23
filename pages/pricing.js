@@ -94,6 +94,7 @@ export default function Pricing({ isLoggedIn }) {
       <Head>
         <title>Pricing | PawDue</title>
         <meta name="description" content={`Start free for up to ${PLANS.free.limit} dogs. Starter ${PLANS.starter.priceLabel}, Pro ${PLANS.pro.priceLabel}. Cancel anytime.`} />
+        <link rel="canonical" href="https://pawdue.pet/pricing" />
       </Head>
       <LandingNav isLoggedIn={isLoggedIn} />
 

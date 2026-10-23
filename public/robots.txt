@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /book/
+
+Sitemap: https://pawdue.pet/sitemap.xml
