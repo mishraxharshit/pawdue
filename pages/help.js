@@ -62,6 +62,7 @@ export default function Help() {
       <Head>
         <title>Help | PawDue</title>
         <meta name="description" content="Answers about adding dogs, how reminders are sent, the booking link, lapsed clients and billing." />
+        <link rel="canonical" href="https://pawdue.pet/help" />
       </Head>
       <LandingNav />
 

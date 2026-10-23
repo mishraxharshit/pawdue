@@ -51,6 +51,26 @@ export async function getServerSideProps({ req, res }) {
   return { props: {} };
 }
 
+const ORG_JSONLD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE}/#org`,
+      "name": "PawDue",
+      "url": SITE,
+      "description": "PawDue is a helper for dog groomers, built together with them. It tracks when each dog is due, reminds owners to rebook, and shows which clients have gone quiet.",
+      "sameAs": [
+        "https://x.com/pawdue_pet",
+        "https://www.instagram.com/pawdue.pet",
+        "https://www.facebook.com/profile.php?id=61595296317797",
+        "https://www.linkedin.com/company/pawdue",
+      ],
+    },
+    { "@type": "WebSite", "@id": `${SITE}/#site`, "name": "PawDue", "url": SITE, "publisher": { "@id": `${SITE}/#org` } },
+  ],
+});
+
 const TITLE = "PawDue: never lose a regular groom client to forgetting";
 const DESC =
   "PawDue tracks when every dog is due, emails the owner a friendly reminder with a booking link, and shows you who has gone quiet. Built for dog groomers. Free for up to 30 dogs.";
@@ -69,6 +89,7 @@ export default function Landing() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content={`${SITE}/media/og.jpg`} />
         <link rel="canonical" href={SITE} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSONLD }} />
       </Head>
 
       <LandingNav />
