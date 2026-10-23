@@ -444,6 +444,9 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .pd-sitefooter-top { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 40px; }
 @media (max-width: 780px) { .pd-sitefooter-top { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .pd-sitefooter-top { grid-template-columns: 1fr; } }
+.pd-social { display: flex; gap: 10px; margin-top: 18px; }
+.pd-social a { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--pd-teal, #2B5D4C); border: 1px solid var(--pd-line, #E1E4DD); transition: background .15s, color .15s, transform .15s; }
+.pd-social a:hover { background: var(--pd-teal, #2B5D4C); color: #fff; transform: translateY(-2px); }
 .pd-sitefooter-brand p { margin: 14px 0 0; color: var(--pd-ink-soft); font-size: .86rem; line-height: 1.55; max-width: 32ch; }
 .pd-sitefooter-col { display: flex; flex-direction: column; gap: 10px; }
 .pd-sitefooter-heading { font-size: .76rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--pd-ink-soft); margin-bottom: 4px; }
