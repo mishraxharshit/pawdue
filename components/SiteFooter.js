@@ -61,6 +61,7 @@ export default function SiteFooter() {
             <div className="pd-sitefooter-heading">Product</div>
             <Link href="/">Overview</Link>
             <Link href="/pricing">Pricing</Link>
+            <Link href="/blog">Blog</Link>
             <Link href="/register">Start free</Link>
             <Link href="/login">Log in</Link>
           </div>
