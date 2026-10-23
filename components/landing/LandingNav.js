@@ -18,6 +18,7 @@ export default function LandingNav({ isLoggedIn = false, home = false }) {
         <nav className={s.navLinks} aria-label="Main">
           <a href={home ? "#day" : "/#day"}>How it works</a>
           <Link href="/pricing">Pricing</Link>
+          <Link href="/blog">Blog</Link>
           <Link href="/help">Help</Link>
           {!isLoggedIn && <Link href="/login">Log in</Link>}
           <Link className={`${s.pill} ${s.pillMain} ${s.pillSm}`} href={isLoggedIn ? "/dashboard" : "/register"}>{isLoggedIn ? "Dashboard" : "Start free"}</Link>
