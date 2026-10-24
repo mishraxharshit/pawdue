@@ -103,7 +103,7 @@ export default function Post({ post, related }) {
             </nav>
           )}
           <BlogBody blocks={post.blocks} />
-          <p className={b.note}>Photos and footage are illustrative stock, not PawDue customers. This article is general guidance, so adapt it to your own business and the rules where you work.</p>
+          <p className={b.note}> This article is general guidance, so adapt it to your own business and the rules where you work.</p>
         </article>
 
         <section className={b.more}>

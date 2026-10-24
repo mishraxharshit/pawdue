@@ -78,7 +78,6 @@ export default function BlogIndex({ posts }) {
               <Reveal key={p.slug} delay={(i % 2) * 90} style={{ display: "contents" }}><Card p={p} /></Reveal>
             ))}
           </div>
-          <p className={b.note} style={{ textAlign: "center", marginTop: 40 }}>Photos and footage on this site are illustrative stock, not PawDue customers.</p>
         </div>
         <section style={{ padding: "90px 0 100px" }}>
           <div className={s.final}>
