@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createSupabaseBrowserClient } from "../lib/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 
 const COOLDOWN_SECONDS = 60;
 
@@ -25,7 +25,14 @@ export default function ForgotPassword() {
     setError("");
     setBusy(true);
     try {
-      const supabase = createSupabaseBrowserClient();
+      // Implicit flow on purpose: the email link then carries the session in the
+      // URL itself, so it opens fine on any device or browser (the default PKCE
+      // link only works in the browser that requested it).
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        { auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+      );
       const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
       });

@@ -13,10 +13,56 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [linkError, setLinkError] = useState("");
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     let cancelled = false;
+
+    // Implicit-flow link: tokens arrive in the URL hash. Set the session directly.
+    try {
+      const h = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const at = h.get("access_token");
+      const rt = h.get("refresh_token");
+      if (at && rt) {
+        supabase.auth.setSession({ access_token: at, refresh_token: rt }).then(({ data, error }) => {
+          if (cancelled) return;
+          if (error || !data?.session) {
+            setLinkError(error?.message || "link could not be verified");
+            setState("invalid");
+          } else {
+            window.history.replaceState(null, "", window.location.pathname);
+            setState("ready");
+          }
+        });
+      }
+    } catch (e) {}
+
+    // Link style that works on any device: the email carries a token_hash and
+    // this page verifies it directly (no same-browser secret needed).
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const th = q.get("token_hash");
+      if (th) {
+        supabase.auth.verifyOtp({ type: "recovery", token_hash: th }).then(({ data, error }) => {
+          if (cancelled) return;
+          if (error || !data?.session) {
+            setLinkError(error?.message || "link could not be verified");
+            setState("invalid");
+          } else {
+            setState("ready");
+          }
+        });
+      }
+    } catch (e) {}
+
+    // Supabase reports a bad link in the URL (query or hash). Show it so the
+    // real reason (expired, already used) is visible instead of a guess.
+    try {
+      const p = new URLSearchParams(window.location.search + "&" + window.location.hash.replace(/^#/, ""));
+      const d = p.get("error_description") || p.get("error_code");
+      if (d) setLinkError(d.replace(/\+/g, " "));
+    } catch (e) {}
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
@@ -30,7 +76,7 @@ export default function ResetPassword() {
     const timer = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
-      setState((s) => (s === "checking" ? (data.session ? "ready" : "invalid") : s));
+      setState((s) => (s === "checking" ? (data.session ? "ready" : (new URLSearchParams(window.location.search).get("token_hash") || window.location.hash.includes("access_token") ? "checking" : "invalid")) : s));
     }, 2500);
 
     return () => {
@@ -67,6 +113,7 @@ export default function ResetPassword() {
         {state === "invalid" && (
           <>
             <p className="sub">This reset link is invalid or has expired. Links work once and for a short time.</p>
+            {linkError && <p className="sub">Reason: {linkError}</p>}
             <Link className="link" href="/forgot-password">Send me a new link</Link>
           </>
         )}
