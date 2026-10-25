@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, slot_at, status, created_at, dogs(dog_name, owner_name, breed)")
+    .select("id, slot_at, status, created_at, dogs(dog_name, owner_name, owner_email, phone, breed)")
     .gte("slot_at", new Date().toISOString())
     .order("slot_at", { ascending: true });
 

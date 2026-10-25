@@ -226,6 +226,13 @@ export default function Dashboard({ userId, userEmail }) {
         )
         .on(
           "postgres_changes",
+          { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (payload.eventType !== "INSERT") loadBookings();
+          }
+        )
+        .on(
+          "postgres_changes",
           { event: "UPDATE", schema: "public", table: "dogs", filter: `user_id=eq.${userId}` },
           () => {
             // Covers reminder sends (last_reminder_sent_at changing) as well
@@ -242,6 +249,41 @@ export default function Dashboard({ userId, userEmail }) {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  // Safety net next to Realtime: if the live connection drops (sleeping laptop,
+  // flaky wifi), bookings still catch up within a minute and whenever the tab
+  // is opened again.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") loadBookings();
+    };
+    const timer = setInterval(refresh, 60000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  async function cancelBooking(b) {
+    const name = b.dogs?.dog_name || "this dog";
+    const note = b.dogs?.owner_email ? " The owner will get an email." : " The owner has no email on file, so tell them yourself.";
+    if (!window.confirm(`Cancel ${name}'s booking?${note}`)) return;
+    const res = await fetch("/api/bookings/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: b.id }),
+    });
+    if (res.ok) {
+      showToast("Booking cancelled");
+      loadBookings();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || "Could not cancel the booking", "error");
+    }
+  }
 
   // Close dropdowns when clicking outside them.
   useEffect(() => {
@@ -951,14 +993,14 @@ export default function Dashboard({ userId, userEmail }) {
               <div className="pd-tempty">No upcoming bookings yet. They&apos;ll show up here the moment an owner books through their reminder link.</div>
             ) : (
               <>
-                <div className="pd-trow pd-thead" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1fr" }}>
+                <div className="pd-trow pd-thead" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1.2fr" }}>
                   <div>Dog</div>
                   <div className="pd-thead-owner">Owner</div>
                   <div>When</div>
                   <div>Status</div>
                 </div>
                 {bookings.map((b) => (
-                  <div className="pd-trow" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1fr" }} key={b.id}>
+                  <div className="pd-trow" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1.2fr" }} key={b.id}>
                     <div className="pd-tcell-dog">
                       <Avatar name={b.dogs?.dog_name || "?"} size={32} />
                       <div>
@@ -966,12 +1008,19 @@ export default function Dashboard({ userId, userEmail }) {
                         <div className="pd-tcell-dog-breed">{b.dogs?.breed}</div>
                       </div>
                     </div>
-                    <div className="pd-tcell-owner">{b.dogs?.owner_name}</div>
-                    <div className="pd-tcell-due">
-                      {new Date(b.slot_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                      <div className="pd-tcell-due-sub">{new Date(b.slot_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
+                    <div className="pd-tcell-owner">
+                      {b.dogs?.owner_name}
+                      {b.dogs?.phone && <div className="pd-tcell-due-sub">{b.dogs.phone}</div>}
                     </div>
-                    <div><span className="badge ok">{b.status}</span></div>
+                    <div className="pd-tcell-due">
+                      {new Date(b.slot_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: timezone })}
+                      <div className="pd-tcell-due-sub">{new Date(b.slot_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })}</div>
+                    </div>
+                    <div>
+                      <span className="badge ok">{b.status}</span>
+                      {Date.now() - new Date(b.created_at).getTime() < 24 * 3600 * 1000 && <span className="badge" style={{ marginLeft: 6 }}>New</span>}
+                      <div><button className="ghost" style={{ marginTop: 6, padding: "4px 10px", fontSize: ".78rem" }} onClick={() => cancelBooking(b)}>Cancel</button></div>
+                    </div>
                   </div>
                 ))}
               </>
