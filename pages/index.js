@@ -324,7 +324,7 @@ export default function Landing() {
               </div>
             </div>
             <div className={s.founder}>
-              <p><b>From the founder.</b> PawDue is built by one person who wants groomers to spend their energy on dogs, not on chasing rebookings. I read every message sent through the feedback page. If something in PawDue slows you down, tell me and it goes on the list.</p>
+              <p><b>From the founder.</b> PawDue is built specifically to help groomers pour their energy into dogs instead of chasing rebookings. We read every message sent through the feedback page. If something in PawDue slows you down, tell me and it goes on the list.</p>
             </div>
           </div>
         </section>
