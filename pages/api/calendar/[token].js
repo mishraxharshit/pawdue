@@ -34,6 +34,6 @@ export default async function handler(req, res) {
     { name: `${owner.business_name || "PawDue"} bookings`, slotMinutes: avail?.slot_minutes || 60 }
   );
   res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-  res.setHeader("Cache-Control", "private, max-age=300");
+  res.setHeader("Cache-Control", "private, max-age=60");
   return res.status(200).send(ics);
 }

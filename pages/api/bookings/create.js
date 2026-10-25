@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../lib/booking";
+import { notifyBookingCreated } from "../../../lib/bookingNotify";
 import { rateLimit } from "../../../lib/rateLimit";
 
 export default async function handler(req, res) {
@@ -16,7 +17,7 @@ export default async function handler(req, res) {
 
   const { data: dog, error: dogError } = await admin
     .from("dogs")
-    .select("id, user_id, dog_name")
+    .select("id, user_id, dog_name, owner_name, owner_email, phone, breed")
     .eq("booking_token", token)
     .maybeSingle();
 
@@ -65,6 +66,10 @@ export default async function handler(req, res) {
     // Unique constraint race - someone else grabbed it in the split second between checks.
     return res.status(409).json({ error: "Sorry, that slot was just taken. Please pick another." });
   }
+
+  // Email the groomer and the dog owner. Awaited because serverless functions
+  // can stop right after the response; failures are logged, never thrown.
+  await notifyBookingCreated(admin, { userId: dog.user_id, dog, booking });
 
   return res.status(201).json({ booking, dogName: dog.dog_name });
 }

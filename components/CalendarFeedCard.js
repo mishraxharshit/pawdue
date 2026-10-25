@@ -39,6 +39,13 @@ export default function CalendarFeedCard() {
     } catch {}
   }
 
+  // One-click subscribe links. They open the calendar app with the feed
+  // already filled in; the person only confirms.
+  const httpsUrl = url || "";
+  const webcal = httpsUrl.replace(/^https?:\/\//, "webcal://");
+  const googleHref = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`;
+  const outlookHref = `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(httpsUrl)}&name=${encodeURIComponent("PawDue bookings")}`;
+
   return (
     <div className="card pd-set-card">
       <h3 className="pd-set-title">Add bookings to your calendar</h3>
@@ -50,11 +57,16 @@ export default function CalendarFeedCard() {
         <>
           <input readOnly value={url} onFocus={(e) => e.target.select()} style={{ fontSize: ".8rem" }} aria-label="Calendar feed link" />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
-            <button onClick={copy}>{copied ? "Copied" : "Copy link"}</button>
+            <a className="pd-cal-btn" href={googleHref} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
+            <a className="pd-cal-btn" href={webcal}>Add to Apple Calendar</a>
+            <a className="pd-cal-btn" href={outlookHref} target="_blank" rel="noopener noreferrer">Add to Outlook</a>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+            <button className="ghost" onClick={copy}>{copied ? "Copied" : "Copy link"}</button>
             <button className="ghost" onClick={() => create(true)} disabled={busy}>Make a new link</button>
           </div>
           <p className="sub" style={{ fontSize: ".78rem", marginBottom: 0 }}>
-            Google Calendar: Other calendars (+) &gt; From URL &gt; paste the link. Anyone with this link can see your bookings, so keep it private.
+            Each button opens your calendar with this link filled in, so you only confirm once. Anyone with this link can see your bookings, so keep it private.
           </p>
         </>
       ) : (

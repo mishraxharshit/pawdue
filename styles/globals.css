@@ -1249,3 +1249,9 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .pd-wa-btn { display: inline-block; background: #1f8f5a; color: #fff; text-decoration: none; font-weight: 700; font-size: .84rem; padding: 9px 16px; border-radius: 10px; }
 .pd-wa-btn:hover { opacity: .92; }
 .success { background:#EAF4EE; color:#1D4536; border:1px solid #CFE3D6; border-radius:12px; padding:12px 14px; font-size:.9rem; line-height:1.5; }
+
+
+.pd-cal-btn { display: inline-block; text-align: center; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; font-size: .86rem; padding: 10px 16px; border-radius: 10px; }
+.pd-cal-btn:hover { opacity: .92; }
+
+.success { background:#EAF4EE; color:#1D4536; border:1px solid #CFE3D6; border-radius:12px; padding:12px 14px; font-size:.9rem; line-height:1.5; }
