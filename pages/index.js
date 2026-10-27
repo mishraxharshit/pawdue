@@ -59,6 +59,7 @@ const ORG_JSONLD = JSON.stringify({
       "@id": `${SITE}/#org`,
       "name": "PawDue",
       "url": SITE,
+      "logo": `${SITE}/icon-512.png`,
       "description": "PawDue is a helper for dog groomers, built together with them. It tracks when each dog is due, reminds owners to rebook, and shows which clients have gone quiet.",
       "sameAs": [
         "https://x.com/pawdue_pet",
@@ -127,6 +128,7 @@ export default function Landing() {
               <span>Shown in your Lapsed list so you can send a personal message.</span>
             </div>
           </div>
+          <p className={s.credit}>Photos and footage on this page are illustrative stock, not PawDue customers.</p>
         </section>
 
         {/* EMPATHY: say their problem back to them in their words. */}
@@ -324,7 +326,7 @@ export default function Landing() {
               </div>
             </div>
             <div className={s.founder}>
-              <p><b>From the founder.</b> PawDue is built specifically to help groomers pour their energy into dogs instead of chasing rebookings. We read every message sent through the feedback page. If something in PawDue slows you down, tell us and it goes on the list.</p>
+              <p><b>From the founder.</b> PawDue is built by one person who wants groomers to spend their energy on dogs, not on chasing rebookings. I read every message sent through the feedback page. If something in PawDue slows you down, tell me and it goes on the list.</p>
             </div>
           </div>
         </section>
