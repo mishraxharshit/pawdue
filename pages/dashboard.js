@@ -15,6 +15,7 @@ import CalendarFeedCard from "../components/CalendarFeedCard";
 import LocalTimeNow from "../components/LocalTimeNow";
 import RevenueBanner from "../components/RevenueBanner";
 import SetupBanner from "../components/SetupBanner";
+import { TodayCard, LapsedCard, GetStarted } from "../components/HomeToday";
 import RevenueChart from "../components/RevenueChart";
 import StatusDonut from "../components/StatusDonut";
 import ReminderBreakdown from "../components/ReminderBreakdown";
@@ -598,7 +599,23 @@ export default function Dashboard({ userId, userEmail }) {
     .filter((x) => x.view === "overdue" || x.view === "soon")
     .sort((a, b) => a.comp.daysLeft - b.comp.daysLeft);
 
-  let filtered = filter === "all" ? withComp : withComp.filter((x) => x.view === filter);
+  const lapsedRows = withComp
+    .filter((x) => x.view === "lapsed")
+    .sort((a, b) => b.comp.daysLeft - a.comp.daysLeft);
+  const noEmailCount = dogs.filter((d) => !d.owner_email).length;
+
+  const setupSteps = [
+    { key: "name", title: "Add your salon name", hint: "It shows on reminders and booking emails.", done: !!(profile.businessName || "").trim(), actionLabel: "Add", onAction: () => setActiveView("billing") },
+    { key: "tz", title: "Set your time zone", hint: "So bookings and reminders use your local time.", done: timezone !== "UTC", actionLabel: "Set", onAction: () => setActiveView("billing") },
+    { key: "dogs", title: "Add your dogs", hint: "Add one by one or import a CSV.", done: dogs.length > 0, actionLabel: "Import CSV", onAction: () => setImportOpen(true) },
+    { key: "email", title: "Put an owner email on every dog", hint: noEmailCount ? `${noEmailCount} dog${noEmailCount === 1 ? "" : "s"} missing an email, so no automatic reminder.` : "Reminders are sent by email.", done: dogs.length > 0 && noEmailCount === 0, actionLabel: dogs.length ? "Show them" : "Add dog", onAction: () => (dogs.length ? setFilter("noemail") : openAddModal()) },
+  ];
+
+  let filtered = filter === "all"
+    ? withComp
+    : filter === "noemail"
+      ? withComp.filter((x) => !x.dog.owner_email)
+      : withComp.filter((x) => x.view === filter);
   if (search.trim()) {
     const q = search.trim().toLowerCase();
     const qDigits = q.replace(/\D/g, "");
@@ -788,7 +805,33 @@ export default function Dashboard({ userId, userEmail }) {
         {/* ---------- Dogs view ---------- */}
         {activeView === "dogs" && (
           <>
+            {!isLoading && <GetStarted steps={setupSteps} />}
+            {!isLoading && dogs.length > 0 && (
+              <TodayCard
+                counts={counts}
+                bookings={bookings}
+                timezone={timezone}
+                onShowOverdue={() => setFilter("overdue")}
+                onShowSoon={() => setFilter("soon")}
+                onShowLapsed={() => setFilter("lapsed")}
+                onShowBookings={() => setActiveView("bookings")}
+              />
+            )}
+            {!isLoading && (
+              <LapsedCard
+                rows={lapsedRows}
+                messageFor={(dog, comp) => manualMessage(dog, comp, "lapsed")}
+                onViewAll={() => setFilter("lapsed")}
+              />
+            )}
+
             <RevenueBanner />
+
+            {filter === "noemail" && (
+              <div className="pd-lapsed-note">
+                Showing dogs with no owner email. <button className="link-btn" onClick={() => setFilter("all")}>Show all</button>
+              </div>
+            )}
 
             <div className="pd-stat-chips">
               <div className={`pd-stat-chip overdue ${filter === "overdue" ? "is-active" : ""}`} role="button" tabIndex={0} onClick={() => setFilter(filter === "overdue" ? "all" : "overdue")} onKeyDown={(e) => e.key === "Enter" && setFilter(filter === "overdue" ? "all" : "overdue")}>
