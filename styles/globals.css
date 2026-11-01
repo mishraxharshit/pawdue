@@ -1255,3 +1255,29 @@ button.small { padding: 6px 10px; font-size: .78rem; }
 .pd-cal-btn:hover { opacity: .92; }
 
 .success { background:#EAF4EE; color:#1D4536; border:1px solid #CFE3D6; border-radius:12px; padding:12px 14px; font-size:.9rem; line-height:1.5; }
+/* ---- Dashboard home: Today, Lapsed, Get set up ---- */
+.link-btn { background: none; border: 0; padding: 0; color: var(--accent, #B8461F); font-weight: 700; font-size: .85rem; cursor: pointer; text-decoration: underline; }
+.pd-today, .pd-lapsed-card, .pd-getstarted { margin-bottom: 14px; }
+.pd-today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.pd-today-head .pd-set-title { margin: 0; }
+.pd-today-next { font-size: .85rem; color: var(--sub); }
+.pd-today-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.pd-today-tile { display: flex; flex-direction: column; gap: 2px; text-align: left; background: var(--bg, #FBF7F1); border: 1px solid var(--line, #E7DED2); border-radius: 12px; padding: 12px 14px; cursor: pointer; font: inherit; color: inherit; }
+.pd-today-tile:hover { border-color: #1F5C4F; }
+.pd-today-tile.is-hot .pd-today-num { color: #B8461F; }
+.pd-today-tile.is-quiet .pd-today-num { color: var(--sub); }
+.pd-today-num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+.pd-today-label { font-size: .78rem; color: var(--sub); }
+.pd-today-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; font-size: .9rem; }
+.pd-lapsed-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pd-lapsed-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line, #E7DED2); }
+.pd-progress { height: 6px; border-radius: 99px; background: var(--line, #E7DED2); overflow: hidden; margin-bottom: 12px; }
+.pd-progress > div { height: 100%; background: #1F5C4F; transition: width .3s; }
+.pd-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.pd-steps li { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.pd-step-dot { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line, #E7DED2); display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 800; color: #fff; }
+.pd-steps li.is-done .pd-step-dot { background: #1F5C4F; border-color: #1F5C4F; }
+.pd-steps li.is-done b { color: var(--sub); text-decoration: line-through; }
+.pd-step-text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: .92rem; }
+.pd-step-text .sub { font-size: .8rem; }
+@media (max-width: 640px) { .pd-today-grid { grid-template-columns: repeat(2, 1fr); } }
