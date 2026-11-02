@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-export default function SetupBanner() {
+// hideKeys: issue keys another part of the page already shows (no double nagging).
+export default function SetupBanner({ hideKeys = [] }) {
   const [issues, setIssues] = useState([]);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return [];
@@ -28,7 +29,7 @@ export default function SetupBanner() {
     }
   }
 
-  const visible = issues.filter((i) => !dismissed.includes(i.key));
+  const visible = issues.filter((i) => !dismissed.includes(i.key) && !hideKeys.includes(i.key));
   if (visible.length === 0) return null;
 
   return (

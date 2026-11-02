@@ -96,6 +96,13 @@ export default async function handler(req, res) {
       // Migration not run yet: still honor each groomer's timezone.
       ({ data: settingsRows } = await supabase.from("business_settings").select("user_id, timezone"));
     }
+    // Groomers who paused Autopilot get no automatic reminders at all. If the
+    // column does not exist yet (add-autopilot.sql not run) nobody is paused.
+    const { data: pausedRows, error: pausedError } = await supabase
+      .from("business_settings")
+      .select("user_id")
+      .eq("autopilot_paused", true);
+    const pausedUsers = new Set(pausedError ? [] : (pausedRows || []).map((r) => r.user_id));
     const timezoneByUser = new Map((settingsRows || []).map((s) => [s.user_id, s.timezone]));
     const profileByUser = new Map((settingsRows || []).map((s) => [s.user_id, s]));
 
@@ -114,7 +121,7 @@ export default async function handler(req, res) {
       skipped: 0,
       failed: 0,
       notSendHour: 0,
-      skipReasons: { optedOut: 0, alreadyBooked: 0, notDueYet: 0, cooldown: 0, limitReached: 0, retryWait: 0, lapsed: 0, gaveUp: 0, noContact: 0 },
+      skipReasons: { paused: 0, optedOut: 0, alreadyBooked: 0, notDueYet: 0, cooldown: 0, limitReached: 0, retryWait: 0, lapsed: 0, gaveUp: 0, noContact: 0 },
       serverTimeUtc: now.toISOString(),
       sendHour: sendHourValid ? parsedSendHour : null,
       sendWindowHours: SEND_WINDOW_HOURS,
@@ -129,6 +136,12 @@ export default async function handler(req, res) {
 
     const dueEntries = [];
     for (const dog of dogs) {
+      if (pausedUsers.has(dog.user_id)) {
+        results.skipReasons.paused++;
+        results.skipped++;
+        continue;
+      }
+
       if (dog.opted_out) {
         results.skipReasons.optedOut++;
         results.skipped++;
