@@ -85,6 +85,11 @@ export default function Dashboard({ userId, userEmail }) {
   const [activeView, setActiveView] = useState("home"); // 'home' | 'dogs' (Clients) | 'analytics' | 'bookings' | 'archived' | 'settings' | 'billing'
   const [settingsTab, setSettingsTab] = useState("business"); // 'autopilot' | 'business' | 'hours' | 'calendar' | 'account'
   const [isLoading, setIsLoading] = useState(true);
+  // Home mixes dogs, bookings and settings. Until all three have answered, show
+  // nothing rather than a half-true picture (e.g. "set up your salon" flashing
+  // for an account that already did).
+  const [bookingsReady, setBookingsReady] = useState(false);
+  const [settingsReady, setSettingsReady] = useState(false);
   const [filter, setFilter] = useState("all");
   const [groupBy, setGroupBy] = useState("status"); // 'status' | 'name'
   const [search, setSearch] = useState("");
@@ -158,8 +163,11 @@ export default function Dashboard({ userId, userEmail }) {
   }
 
   async function loadBookings() {
-    const res = await fetch("/api/bookings/list");
-    if (res.ok) setBookings(await res.json());
+    try {
+      const res = await fetch("/api/bookings/list");
+      if (res.ok) setBookings(await res.json());
+    } catch {}
+    setBookingsReady(true);
   }
 
   async function loadAvailability() {
@@ -173,6 +181,7 @@ export default function Dashboard({ userId, userEmail }) {
   }
 
   async function loadBusinessSettings() {
+    try {
     const res = await fetch("/api/settings/business");
     if (res.ok) {
       const data = await res.json();
@@ -182,7 +191,10 @@ export default function Dashboard({ userId, userEmail }) {
       setAutopilotPaused(!!data.autopilotPaused);
       setAutopilotAvailable(data.autopilotAvailable !== false);
     }
+    } catch {}
+    setSettingsReady(true);
   }
+
 
   // Pause / resume every automatic reminder for this account.
   async function toggleAutopilot() {
@@ -654,6 +666,7 @@ export default function Dashboard({ userId, userEmail }) {
     { key: "name", title: "Add your salon name", hint: "It shows on reminders and booking emails.", done: !!(profile.businessName || "").trim(), actionLabel: "Add", onAction: () => { setSettingsTab("business"); setActiveView("settings"); } },
     { key: "dogs", title: "Add your dogs", hint: "Add one by one or import a CSV.", done: dogs.length > 0, actionLabel: "Import CSV", onAction: () => setImportOpen(true) },
   ];
+  const homeReady = !isLoading && bookingsReady && settingsReady;
   const stats = weekStats(dogs, bookings);
   const failedDogs = failedReminderDogs(dogs);
   const upcoming = comingUp(withComp, timezone);
@@ -877,7 +890,8 @@ export default function Dashboard({ userId, userEmail }) {
         {/* ---------- Home view ---------- */}
         {activeView === "home" && (
           <>
-            {!isLoading && (
+            {!homeReady && (<><div className="skeleton-card" style={{ height: 64 }} /><div className="skeleton-card" style={{ height: 150, marginTop: 14 }} /></>)}
+            {homeReady && (
               <HomeHeader
                 timezone={timezone}
                 todayCount={todayCount}
@@ -888,14 +902,14 @@ export default function Dashboard({ userId, userEmail }) {
                 onTogglePause={toggleAutopilot}
               />
             )}
-            {!isLoading && autopilotPaused && dogs.length > 0 && <PausedNotice onResume={toggleAutopilot} busy={pauseBusy} />}
-            {!isLoading && <GetStarted steps={setupSteps} />}
-            {!isLoading && dogs.length > 0 && (
+            {homeReady && autopilotPaused && dogs.length > 0 && <PausedNotice onResume={toggleAutopilot} busy={pauseBusy} />}
+            {homeReady && <GetStarted steps={setupSteps} />}
+            {homeReady && dogs.length > 0 && (
               <HandledBand stats={stats}>
                 <RecoveredTile />
               </HandledBand>
             )}
-            {!isLoading && dogs.length > 0 && (
+            {homeReady && dogs.length > 0 && (
               <NeedsYou
                 lapsedRows={lapsedRows}
                 overdueRows={overdueRows}
@@ -909,7 +923,7 @@ export default function Dashboard({ userId, userEmail }) {
                 onViewClients={openClients}
               />
             )}
-            {!isLoading && dogs.length > 0 && (
+            {homeReady && dogs.length > 0 && (
               <div className="pd-home-cols">
                 <TodaySchedule bookings={bookings} dogs={dogs} timezone={timezone} busyId={busyId} onGroomed={markGroomed} onOpenBookings={() => setActiveView("bookings")} />
                 <div className="pd-home-side">
