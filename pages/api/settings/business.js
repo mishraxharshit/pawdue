@@ -21,6 +21,18 @@ async function readSettings(supabase, userId) {
   return basic.data;
 }
 
+// Autopilot pause lives in its own column so a database that has not run
+// supabase/add-autopilot.sql yet keeps working: reads then report "not paused".
+async function readPaused(supabase, userId) {
+  const { data, error } = await supabase
+    .from("business_settings")
+    .select("autopilot_paused")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return { paused: false, available: false };
+  return { paused: !!data?.autopilot_paused, available: true };
+}
+
 export default async function handler(req, res) {
   const supabase = createSupabaseServerClient(req, res);
   const {
@@ -30,8 +42,11 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     const data = await readSettings(supabase, user.id);
+    const ap = await readPaused(supabase, user.id);
 
     return res.status(200).json({
+      autopilotPaused: ap.paused,
+      autopilotAvailable: ap.available,
       defaultServicePrice: data ? Number(data.default_service_price) : DEFAULT_PRICE,
       timezone: data?.timezone || DEFAULT_TIMEZONE,
       businessName: data?.business_name || "",
@@ -42,7 +57,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PATCH") {
-    const { defaultServicePrice, timezone, businessName, businessPhone, replyToEmail } = req.body || {};
+    const { defaultServicePrice, timezone, businessName, businessPhone, replyToEmail, autopilotPaused } = req.body || {};
     const update = { user_id: user.id };
 
     if (defaultServicePrice !== undefined) {
@@ -81,19 +96,27 @@ export default async function handler(req, res) {
       update.reply_to_email = v || null;
     }
 
+    if (autopilotPaused !== undefined) {
+      if (typeof autopilotPaused !== "boolean") return res.status(400).json({ error: "autopilotPaused must be true or false" });
+      update.autopilot_paused = autopilotPaused;
+    }
+
     const { error } = await supabase.from("business_settings").upsert(update, { onConflict: "user_id" });
     if (error) {
       const missingCol = /column .* does not exist|schema cache/i.test(error.message || "");
       return res.status(500).json({
         error: missingCol
-          ? "Database is missing new columns. Run supabase/add-business-profile.sql in the Supabase SQL Editor."
+          ? "Database is missing new columns. Run supabase/add-business-profile.sql and supabase/add-autopilot.sql in the Supabase SQL Editor."
           : error.message,
       });
     }
 
     const fresh = await readSettings(supabase, user.id);
+    const freshAp = await readPaused(supabase, user.id);
 
     return res.status(200).json({
+      autopilotPaused: freshAp.paused,
+      autopilotAvailable: freshAp.available,
       defaultServicePrice: Number(fresh?.default_service_price ?? DEFAULT_PRICE),
       timezone: fresh?.timezone || DEFAULT_TIMEZONE,
       businessName: fresh?.business_name || "",

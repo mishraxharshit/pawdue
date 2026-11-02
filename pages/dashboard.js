@@ -13,9 +13,11 @@ import ImportDogsModal from "../components/ImportDogsModal";
 import BusinessProfileCard from "../components/BusinessProfileCard";
 import CalendarFeedCard from "../components/CalendarFeedCard";
 import LocalTimeNow from "../components/LocalTimeNow";
-import RevenueBanner from "../components/RevenueBanner";
+import RecoveredTile from "../components/RecoveredTile";
+import WinbackModal from "../components/WinbackModal";
 import SetupBanner from "../components/SetupBanner";
-import { TodayCard, LapsedCard, GetStarted } from "../components/HomeToday";
+import { HomeHeader, PausedNotice, HandledBand, NeedsYou, TodaySchedule, ComingUp, GetStarted } from "../components/HomeToday";
+import { dayKey, weekStats, failedReminderDogs, comingUp } from "../lib/homeToday";
 import RevenueChart from "../components/RevenueChart";
 import StatusDonut from "../components/StatusDonut";
 import ReminderBreakdown from "../components/ReminderBreakdown";
@@ -23,7 +25,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import {
   IconHome, IconCalendar, IconInbox, IconCard, IconHelp, IconLogout, IconPlus,
   IconBell, IconSearch, IconPencil, IconArchive, IconMessage, IconChevronDown,
-  IconRestore, IconTrash, IconCheck, IconClock, IconChart,
+  IconRestore, IconTrash, IconCheck, IconClock, IconChart, IconSettings, IconPaw,
 } from "../components/icons";
 import { DEFAULT_AVAILABILITY } from "../lib/booking";
 
@@ -80,7 +82,8 @@ export default function Dashboard({ userId, userEmail }) {
   const router = useRouter();
   const [dogs, setDogs] = useState([]);
   const [archivedDogs, setArchivedDogs] = useState([]);
-  const [activeView, setActiveView] = useState("dogs"); // 'dogs' | 'archived' | 'bookings' | 'billing'
+  const [activeView, setActiveView] = useState("home"); // 'home' | 'dogs' (Clients) | 'analytics' | 'bookings' | 'archived' | 'settings' | 'billing'
+  const [settingsTab, setSettingsTab] = useState("business"); // 'autopilot' | 'business' | 'hours' | 'calendar' | 'account'
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [groupBy, setGroupBy] = useState("status"); // 'status' | 'name'
@@ -115,6 +118,10 @@ export default function Dashboard({ userId, userEmail }) {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [winbackOpen, setWinbackOpen] = useState(false);
+  const [autopilotPaused, setAutopilotPaused] = useState(false);
+  const [autopilotAvailable, setAutopilotAvailable] = useState(true);
+  const [pauseBusy, setPauseBusy] = useState(false);
   const [profile, setProfile] = useState({ businessName: "", businessPhone: "", replyToEmail: "" });
   const [modalMode, setModalMode] = useState("add"); // 'add' | 'edit'
   const [modalValues, setModalValues] = useState(emptyForm);
@@ -172,7 +179,34 @@ export default function Dashboard({ userId, userEmail }) {
       setTimezone(data.timezone || "UTC");
       setTimezoneForm(data.timezone || "UTC");
       setProfile({ businessName: data.businessName || "", businessPhone: data.businessPhone || "", replyToEmail: data.replyToEmail || "" });
+      setAutopilotPaused(!!data.autopilotPaused);
+      setAutopilotAvailable(data.autopilotAvailable !== false);
     }
+  }
+
+  // Pause / resume every automatic reminder for this account.
+  async function toggleAutopilot() {
+    if (!autopilotAvailable) {
+      showToast("One-time setup needed: run supabase/add-autopilot.sql in Supabase, then refresh this page.");
+      return;
+    }
+    const next = !autopilotPaused;
+    if (next && !window.confirm("Pause all automatic reminders? Nobody will be emailed until you resume. Bookings and your calendar keep working.")) return;
+    setPauseBusy(true);
+    try {
+      const res = await fetch("/api/settings/business", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autopilotPaused: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not change this");
+      setAutopilotPaused(!!data.autopilotPaused);
+      showToast(next ? "Reminders paused" : "Reminders are back on ✓");
+    } catch (err) {
+      showToast(err.message);
+    }
+    setPauseBusy(false);
   }
 
   async function saveTimezone() {
@@ -603,19 +637,35 @@ export default function Dashboard({ userId, userEmail }) {
     .filter((x) => x.view === "lapsed")
     .sort((a, b) => b.comp.daysLeft - a.comp.daysLeft);
   const noEmailCount = dogs.filter((d) => !d.owner_email).length;
+  const overdueRows = withComp.filter((x) => x.view === "overdue").sort((a, b) => a.comp.daysLeft - b.comp.daysLeft);
+  const failedRows = withComp.filter((x) => x.dog.last_reminder_result === "failed");
+  const noEmailRows = withComp.filter((x) => !x.dog.owner_email);
+  const winbackDraft = (dog, comp) =>
+    manualMessageText({
+      dog,
+      view: "lapsed",
+      businessName: profile.businessName,
+      dueLabel: comp.due.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      bookingUrl: "", // the email adds its own Book button
+    });
+  const openClients = (f) => { setFilter(f); setActiveView("dogs"); };
 
   const setupSteps = [
-    { key: "name", title: "Add your salon name", hint: "It shows on reminders and booking emails.", done: !!(profile.businessName || "").trim(), actionLabel: "Add", onAction: () => setActiveView("billing") },
-    { key: "tz", title: "Set your time zone", hint: "So bookings and reminders use your local time.", done: timezone !== "UTC", actionLabel: "Set", onAction: () => setActiveView("billing") },
+    { key: "name", title: "Add your salon name", hint: "It shows on reminders and booking emails.", done: !!(profile.businessName || "").trim(), actionLabel: "Add", onAction: () => { setSettingsTab("business"); setActiveView("settings"); } },
     { key: "dogs", title: "Add your dogs", hint: "Add one by one or import a CSV.", done: dogs.length > 0, actionLabel: "Import CSV", onAction: () => setImportOpen(true) },
-    { key: "email", title: "Put an owner email on every dog", hint: noEmailCount ? `${noEmailCount} dog${noEmailCount === 1 ? "" : "s"} missing an email, so no automatic reminder.` : "Reminders are sent by email.", done: dogs.length > 0 && noEmailCount === 0, actionLabel: dogs.length ? "Show them" : "Add dog", onAction: () => (dogs.length ? setFilter("noemail") : openAddModal()) },
   ];
+  const stats = weekStats(dogs, bookings);
+  const failedDogs = failedReminderDogs(dogs);
+  const upcoming = comingUp(withComp, timezone);
+  const todayCount = bookings.filter((b) => dayKey(b.slot_at, timezone) === dayKey(new Date(), timezone)).length;
 
   let filtered = filter === "all"
     ? withComp
     : filter === "noemail"
       ? withComp.filter((x) => !x.dog.owner_email)
-      : withComp.filter((x) => x.view === filter);
+      : filter === "failed"
+        ? withComp.filter((x) => x.dog.last_reminder_result === "failed")
+        : withComp.filter((x) => x.view === filter);
   if (search.trim()) {
     const q = search.trim().toLowerCase();
     const qDigits = q.replace(/\D/g, "");
@@ -651,18 +701,21 @@ export default function Dashboard({ userId, userEmail }) {
   // already a lot for a phone-width bar, so each gets a tighter word
   // ("Hours" instead of "Availability") rather than wrapping or truncating.
   const NAV_ITEMS = [
-    { key: "dogs", label: "Dogs", shortLabel: "Dogs", icon: IconHome, badge: needsAttention.length },
-    { key: "analytics", label: "Analytics", shortLabel: "Stats", icon: IconChart },
-    { key: "bookings", label: "Bookings", shortLabel: "Bookings", icon: IconCalendar, badge: bookings.length },
-    { key: "availability", label: "Availability", shortLabel: "Hours", icon: IconClock },
-    { key: "archived", label: "Archived", shortLabel: "Archive", icon: IconInbox },
-    { key: "billing", label: "Billing", shortLabel: "Billing", icon: IconCard },
+    { key: "home", group: "main", label: "Home", shortLabel: "Home", icon: IconHome, badge: needsAttention.length, mobile: true },
+    { key: "dogs", group: "main", label: "Clients", shortLabel: "Clients", icon: IconPaw, mobile: true },
+    { key: "bookings", group: "main", label: "Bookings", shortLabel: "Bookings", icon: IconCalendar, badge: bookings.length, mobile: true },
+    { key: "analytics", group: "main", label: "Insights", shortLabel: "Insights", icon: IconChart, mobile: true },
+    { key: "archived", group: "main", label: "Archive", shortLabel: "Archive", icon: IconInbox, mobile: false },
+    { key: "settings", group: "account", label: "Settings", shortLabel: "Settings", icon: IconSettings, mobile: true },
+    { key: "billing", group: "account", label: "Plan and billing", shortLabel: "Billing", icon: IconCard, mobile: false },
   ];
+  const openSettings = (tab) => { setSettingsTab(tab || "business"); setActiveView("settings"); setProfileOpen(false); };
 
   const VIEW_TITLE = {
-    dogs: "Dogs", analytics: "Analytics", bookings: "Bookings", availability: "Availability",
-    archived: "Archived", billing: "Billing",
+    home: "Home", dogs: "Clients", analytics: "Insights", bookings: "Bookings", settings: "Settings",
+    archived: "Archive", billing: "Plan and billing",
   };
+
 
   return (
     <div className="pd-app">
@@ -684,28 +737,46 @@ export default function Dashboard({ userId, userEmail }) {
             <circle cx="28.5" cy="15.5" r="3.4" fill="#fff" />
             <circle cx="30" cy="30" r="6" fill="#C98A3D" stroke="#2B5D4C" strokeWidth="1.5" />
           </svg>
+          <span className="pd-sidebar-brand">PawDue</span>
         </div>
-        <nav className="pd-sidebar-nav">
-          {NAV_ITEMS.map((item) => (
+        <nav className="pd-sidebar-nav" aria-label="Main">
+          <div className="pd-sidebar-group">Manage</div>
+          {NAV_ITEMS.filter((i) => i.group === "main").map((item) => (
             <button
               key={item.key}
               className={`pd-sidebar-btn ${activeView === item.key ? "active" : ""}`}
               onClick={() => setActiveView(item.key)}
-              title={item.label}
-              aria-label={item.label}
+              aria-current={activeView === item.key ? "page" : undefined}
             >
               <item.icon />
+              <span className="pd-sidebar-label">{item.label}</span>
               {!!item.badge && <span className="pd-sidebar-badge">{item.badge}</span>}
+            </button>
+          ))}
+          <div className="pd-sidebar-group">Account</div>
+          {NAV_ITEMS.filter((i) => i.group === "account").map((item) => (
+            <button
+              key={item.key}
+              className={`pd-sidebar-btn ${activeView === item.key ? "active" : ""}`}
+              onClick={() => (item.key === "settings" ? openSettings(settingsTab) : setActiveView(item.key))}
+              aria-current={activeView === item.key ? "page" : undefined}
+            >
+              <item.icon />
+              <span className="pd-sidebar-label">{item.label}</span>
             </button>
           ))}
         </nav>
         <div className="pd-sidebar-bottom">
-          <Link className="pd-sidebar-btn" href="/help" title="Help" aria-label="Help">
-            <IconHelp />
-          </Link>
-          <button className="pd-sidebar-btn" onClick={handleSignOut} title="Log out" aria-label="Log out">
-            <IconLogout />
-          </button>
+          {billing && (
+            <div className="pd-sidebar-plan">
+              <b>{billing.planName} plan</b>
+              <span>{billing.dogCount}{billing.limit === Infinity ? "" : ` of ${billing.limit}`} dogs</span>
+              {billing.limit !== Infinity && <div className="pd-sidebar-meter"><div style={{ width: `${Math.min(100, (billing.dogCount / billing.limit) * 100)}%` }} /></div>}
+              {!billing.hasBillingAccount && <Link className="link" href="/pricing" style={{ marginTop: 8, fontWeight: 700 }}>Upgrade plan</Link>}
+            </div>
+          )}
+          <Link className="pd-sidebar-btn" href="/help"><IconHelp /><span className="pd-sidebar-label">Help</span></Link>
+          <button className="pd-sidebar-btn" onClick={handleSignOut}><IconLogout /><span className="pd-sidebar-label">Log out</span></button>
         </div>
       </aside>
 
@@ -714,11 +785,11 @@ export default function Dashboard({ userId, userEmail }) {
           Renders the same NAV_ITEMS so the two stay in sync automatically;
           CSS alone decides which one is actually visible. ---------- */}
       <nav className="pd-bottomnav">
-        {NAV_ITEMS.map((item) => (
+        {NAV_ITEMS.filter((i) => i.mobile).map((item) => (
           <button
             key={item.key}
             className={`pd-bottomnav-btn ${activeView === item.key ? "active" : ""}`}
-            onClick={() => setActiveView(item.key)}
+            onClick={() => (item.key === "settings" ? openSettings(settingsTab) : setActiveView(item.key))}
             aria-label={item.label}
           >
             <item.icon width={20} height={20} />
@@ -736,7 +807,7 @@ export default function Dashboard({ userId, userEmail }) {
             <div className="pd-topbar-date">{today}</div>
           </div>
           <div className="pd-topbar-actions">
-            {activeView === "dogs" && (
+            {(activeView === "home" || activeView === "dogs") && (
               <button className="pd-add-btn" onClick={openAddModal} aria-label="Add dog">
                 <IconPlus width={16} height={16} /> <span>Add dog</span>
               </button>
@@ -778,7 +849,8 @@ export default function Dashboard({ userId, userEmail }) {
               {profileOpen && (
                 <div className="pd-profile-dropdown">
                   <div className="pd-profile-email">{userEmail}</div>
-                  <button onClick={() => setActiveView("billing")}><IconCard /> Billing</button>
+                  <button onClick={() => openSettings("business")}><IconSettings /> Settings</button>
+                  <button onClick={() => setActiveView("billing")}><IconCard /> Plan and billing</button>
                   <Link href="/help" onClick={() => setProfileOpen(false)}><IconHelp /> Help</Link>
                   <button onClick={handleSignOut}><IconLogout /> Log out</button>
                   <button onClick={() => { setProfileOpen(false); setDeleteModalOpen(true); }} className="pd-danger-item">
@@ -790,7 +862,7 @@ export default function Dashboard({ userId, userEmail }) {
           </div>
         </div>
 
-        <SetupBanner />
+        <SetupBanner hideKeys={activeView === "home" && dogs.length > 0 ? ["dogs_without_channel"] : []} />
 
         {billing && activeView !== "billing" && (
           <div className="usage-bar">
@@ -802,34 +874,60 @@ export default function Dashboard({ userId, userEmail }) {
           </div>
         )}
 
-        {/* ---------- Dogs view ---------- */}
-        {activeView === "dogs" && (
+        {/* ---------- Home view ---------- */}
+        {activeView === "home" && (
           <>
+            {!isLoading && (
+              <HomeHeader
+                timezone={timezone}
+                todayCount={todayCount}
+                hasDogs={dogs.length > 0}
+                paused={autopilotPaused}
+                pauseAvailable={autopilotAvailable}
+                pauseBusy={pauseBusy}
+                onTogglePause={toggleAutopilot}
+              />
+            )}
+            {!isLoading && autopilotPaused && dogs.length > 0 && <PausedNotice onResume={toggleAutopilot} busy={pauseBusy} />}
             {!isLoading && <GetStarted steps={setupSteps} />}
             {!isLoading && dogs.length > 0 && (
-              <TodayCard
-                counts={counts}
-                bookings={bookings}
-                timezone={timezone}
-                onShowOverdue={() => setFilter("overdue")}
-                onShowSoon={() => setFilter("soon")}
-                onShowLapsed={() => setFilter("lapsed")}
-                onShowBookings={() => setActiveView("bookings")}
+              <HandledBand stats={stats}>
+                <RecoveredTile />
+              </HandledBand>
+            )}
+            {!isLoading && dogs.length > 0 && (
+              <NeedsYou
+                lapsedRows={lapsedRows}
+                overdueRows={overdueRows}
+                failedRows={failedRows}
+                noEmailRows={noEmailRows}
+                messageFor={(dog, comp, view) => manualMessage(dog, comp, view)}
+                busyId={busyId}
+                onGroomed={markGroomed}
+                onEditDog={openEditModal}
+                onReviewAndSend={() => setWinbackOpen(true)}
+                onViewClients={openClients}
               />
             )}
-            {!isLoading && (
-              <LapsedCard
-                rows={lapsedRows}
-                messageFor={(dog, comp) => manualMessage(dog, comp, "lapsed")}
-                onViewAll={() => setFilter("lapsed")}
-              />
+            {!isLoading && dogs.length > 0 && (
+              <div className="pd-home-cols">
+                <TodaySchedule bookings={bookings} dogs={dogs} timezone={timezone} busyId={busyId} onGroomed={markGroomed} onOpenBookings={() => setActiveView("bookings")} />
+                <div className="pd-home-side">
+                  <ComingUp items={upcoming} onShowSoon={() => openClients("soon")} />
+                  <ActivityFeed dogs={dogs} bookings={bookings} />
+                </div>
+              </div>
             )}
+          </>
+        )}
 
-            <RevenueBanner />
+        {/* ---------- Clients view (the full dog list) ---------- */}
+        {activeView === "dogs" && (
+          <>
 
-            {filter === "noemail" && (
+            {(filter === "noemail" || filter === "failed") && (
               <div className="pd-lapsed-note">
-                Showing dogs with no owner email. <button className="link-btn" onClick={() => setFilter("all")}>Show all</button>
+                {filter === "failed" ? "Showing dogs whose last reminder failed." : "Showing dogs with no owner email."} <button className="link-btn" onClick={() => setFilter("all")}>Show all</button>
               </div>
             )}
 
@@ -863,6 +961,7 @@ export default function Dashboard({ userId, userEmail }) {
             </div>
 
             <div className="pd-dogs-tools">
+              <button className="small ghost" onClick={() => setActiveView("archived")}>Archive</button>
               <button className="small ghost" onClick={() => setImportOpen(true)}>Import CSV</button>
               <button className="small ghost" onClick={() => { window.location.href = "/api/dogs/export"; }}>Export CSV</button>
             </div>
@@ -1112,8 +1211,77 @@ export default function Dashboard({ userId, userEmail }) {
             Per-groomer booking hours. This is what a client sees on their
             public booking page (pages/book/[token].js) - previously a fixed
             Mon-Sat 9-5 constant shared by every account. */}
-        {activeView === "availability" && (
-          <div className="pd-settings-grid">
+        {activeView === "settings" && (
+          <div className="pd-settings-wrap">
+          <div className="pd-tabs" role="tablist" aria-label="Settings sections">
+            {[["autopilot", "Autopilot"], ["business", "Business"], ["hours", "Booking hours"], ["calendar", "Calendar"], ["account", "Account"]].map(([k, label]) => (
+              <button key={k} role="tab" aria-selected={settingsTab === k} className={`pd-tab ${settingsTab === k ? "active" : ""}`} onClick={() => setSettingsTab(k)}>{label}</button>
+            ))}
+          </div>
+          <div className="pd-settings-grid pd-settings-single">
+          {settingsTab === "autopilot" && (
+          <div className="pd-settings-col">
+            <div className={`pd-ap-status ${autopilotPaused ? "is-paused" : ""}`}>
+              <div>
+                <b>{autopilotPaused ? "Autopilot is paused" : "Autopilot is on"}</b>
+                <div className="sub">
+                  {autopilotPaused
+                    ? "No automatic reminders are going out. Bookings and your calendar keep working."
+                    : "PawDue is sending reminders for you. Pause it any time, for example on holiday."}
+                </div>
+              </div>
+              <button className={autopilotPaused ? "small" : "small ghost"} onClick={toggleAutopilot} disabled={pauseBusy}>
+                {autopilotPaused ? "Resume reminders" : "Pause reminders"}
+              </button>
+            </div>
+
+            <div className="card pd-set-card">
+              <h3 className="pd-set-title">What PawDue does for you</h3>
+              <p className="sub pd-set-sub">These run on their own. You do not need to switch anything on.</p>
+              <ul className="pd-ap-list">
+                <li><b>Emails owners when a dog is due.</b> Based on each breed's usual grooming cycle, at most 3 reminders per cycle.</li>
+                <li><b>Skips dogs that already booked,</b> and anyone who chose to stop reminders.</li>
+                <li><b>Stops after 30 days overdue</b> so nobody gets nagged. Those clients show up on Home for you to message.</li>
+                <li><b>Confirms every booking by email</b> to you and the owner, and adds it to your calendar.</li>
+                <li><b>Keeps your dashboard up to date</b> the moment someone books or cancels.</li>
+              </ul>
+            </div>
+
+            <div className="card pd-set-card">
+              <h3 className="pd-set-title">What needs your tap</h3>
+              <p className="sub pd-set-sub" style={{ marginBottom: 0 }}>
+                Clients who went quiet are never emailed without you. On Home, open <b>Needs you</b>, then <b>Review and send emails</b>, edit anything you like and send.
+              </p>
+            </div>
+
+            <div className="card pd-set-card">
+              <h3 className="pd-set-title">What your clients see</h3>
+              <p className="sub pd-set-sub">Preview of a reminder email, sent under your salon name.</p>
+              <div className="pd-ap-preview">
+                <div className="pd-ap-preview-salon">{profile.businessName || "Your salon name"}</div>
+                <div className="pd-ap-preview-title">Time to book Bella&apos;s next groom</div>
+                <div>Hi Emma, Bella is due for her groom around 12 November. Pick a time that suits you.</div>
+                <div className="pd-ap-preview-btn">Book a time</div>
+              </div>
+              {!(profile.businessName || "").trim() && (
+                <p className="sub" style={{ margin: "12px 0 0" }}>
+                  Add your salon name in <button className="link-btn" onClick={() => setSettingsTab("business")}>Business</button> so owners see your name here.
+                </p>
+              )}
+            </div>
+
+            <div className="card pd-set-card">
+              <h3 className="pd-set-title">Not built yet</h3>
+              <ul className="pd-ap-list is-muted">
+                <li>Choosing how early reminders go out (1 week, 3 days, due day)</li>
+                <li>Approving booking requests outside your hours</li>
+                <li>A Monday summary email</li>
+              </ul>
+            </div>
+          </div>
+          )}
+
+          {settingsTab === "hours" && (
           <div className="card pd-set-card">
             {!availability ? (
               <div className="skeleton-card" />
@@ -1215,8 +1383,11 @@ export default function Dashboard({ userId, userEmail }) {
               </>
             )}
           </div>
+          )}
 
+          {settingsTab === "business" && (
           <div className="pd-settings-col">
+          <BusinessProfileCard profile={profile} onSaved={setProfile} />
           <div className="card pd-set-card">
             <h3 className="pd-set-title">Timezone</h3>
             <p className="sub pd-set-sub">
@@ -1239,8 +1410,40 @@ export default function Dashboard({ userId, userEmail }) {
             </div>
             {timezoneSaved && <div className="pd-form-hint" style={{ marginTop: 10, marginBottom: 0 }}>Saved ✓</div>}
           </div>
-          <BusinessProfileCard profile={profile} onSaved={setProfile} />
-          <CalendarFeedCard />
+          </div>
+          )}
+
+          {settingsTab === "calendar" && (
+          <div className="pd-settings-col">
+            <CalendarFeedCard />
+          </div>
+          )}
+
+          {settingsTab === "account" && (
+          <div className="pd-settings-col">
+            <div className="card pd-set-card">
+              <h3 className="pd-set-title">Your account</h3>
+              <p className="sub pd-set-sub">Signed in as <b>{userEmail}</b></p>
+              <div className="pd-account-row">
+                <div><b>{billing?.planName || "Free"} plan</b><div className="sub">{billing ? `${billing.dogCount}${billing.limit === Infinity ? "" : ` of ${billing.limit}`} dogs used` : ""}</div></div>
+                <button className="small ghost" onClick={() => setActiveView("billing")}>Plan and billing</button>
+              </div>
+              <div className="pd-account-row">
+                <div><b>Help and contact</b><div className="sub">Guides and how to reach us</div></div>
+                <Link className="link" href="/help" style={{ fontWeight: 700 }}>Open help</Link>
+              </div>
+              <div className="pd-account-row">
+                <div><b>Log out</b><div className="sub">On this device</div></div>
+                <button className="small ghost" onClick={handleSignOut}>Log out</button>
+              </div>
+            </div>
+            <div className="card pd-set-card pd-danger-zone">
+              <h3 className="pd-set-title">Delete account</h3>
+              <p className="sub pd-set-sub">Permanently removes your account, dogs and bookings. This cannot be undone.</p>
+              <button className="small pd-danger-btn" onClick={() => setDeleteModalOpen(true)}>Delete my account</button>
+            </div>
+          </div>
+          )}
           </div>
           </div>
         )}
@@ -1284,6 +1487,15 @@ export default function Dashboard({ userId, userEmail }) {
           limitReached={limitReached}
           onSubmit={handleModalSubmit}
           onClose={closeModal}
+        />
+      )}
+
+      {winbackOpen && (
+        <WinbackModal
+          rows={lapsedRows}
+          draftFor={winbackDraft}
+          onClose={() => setWinbackOpen(false)}
+          onSent={() => loadDogs()}
         />
       )}
 
