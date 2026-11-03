@@ -7,7 +7,7 @@ function money(n) {
   return `$${Math.round(n).toLocaleString()}`;
 }
 
-export default function RecoveredTile() {
+export default function RecoveredTile({ refreshKey = 0 }) {
   const [data, setData] = useState(null);
   const [editing, setEditing] = useState(false);
   const [price, setPrice] = useState("");
@@ -15,13 +15,13 @@ export default function RecoveredTile() {
 
   async function load() {
     try {
-      const res = await fetch("/api/stats/revenue-recovered");
+      const res = await fetch("/api/stats/revenue-recovered", { cache: "no-store" });
       if (res.ok) setData(await res.json());
     } catch {}
   }
   useEffect(() => {
     load();
-  }, []);
+  }, [refreshKey]);
 
   async function save(e) {
     e.preventDefault();

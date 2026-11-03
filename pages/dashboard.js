@@ -107,6 +107,12 @@ export default function Dashboard({ userId, userEmail }) {
   const [portalLoading, setPortalLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [bookings, setBookings] = useState([]);
+  // Bumped whenever something changed on the server, so panels that fetch for
+  // themselves (recovered money, revenue chart) re-read at the same moment.
+  const [syncKey, setSyncKey] = useState(0);
+  const bookingsReq = useRef(0);
+  const dogsReq = useRef(0);
+  const syncTimer = useRef(null);
   const [availability, setAvailability] = useState(null);
   const [availabilityForm, setAvailabilityForm] = useState(DEFAULT_AVAILABILITY);
   const [availabilitySaving, setAvailabilitySaving] = useState(false);
@@ -140,10 +146,14 @@ export default function Dashboard({ userId, userEmail }) {
   }
 
   async function loadDogs() {
-    // no-store: never let the browser answer this from a cached copy.
+    // no-store: never let the browser answer this from a cached copy. The
+    // request counter drops an older answer that arrives after a newer one, so
+    // a slow response can never undo what the screen already shows.
+    const mine = ++dogsReq.current;
     const res = await fetch("/api/dogs", { cache: "no-store" });
     if (res.ok) {
-      setDogs(await res.json());
+      const rows = await res.json();
+      if (mine === dogsReq.current) setDogs(rows);
     } else {
       // Used to fail silently, which makes "my list didn't update" nearly
       // impossible to diagnose. Now it at least shows up in the console.
@@ -163,11 +173,28 @@ export default function Dashboard({ userId, userEmail }) {
   }
 
   async function loadBookings() {
+    const mine = ++bookingsReq.current;
     try {
-      const res = await fetch("/api/bookings/list");
-      if (res.ok) setBookings(await res.json());
+      const res = await fetch("/api/bookings/list", { cache: "no-store" });
+      if (res.ok) {
+        const rows = await res.json();
+        if (mine === bookingsReq.current) setBookings(rows);
+      }
     } catch {}
     setBookingsReady(true);
+  }
+
+  // One call that brings every live number up to date. Many events can arrive
+  // in a burst (a cron run touching 30 dogs), so they are folded into a single
+  // refresh a moment later instead of 30 requests.
+  function syncAll(delay = 150) {
+    if (syncTimer.current) return;
+    syncTimer.current = setTimeout(() => {
+      syncTimer.current = null;
+      loadDogs();
+      loadBookings();
+      setSyncKey((k) => k + 1);
+    }, delay);
   }
 
   async function loadAvailability() {
@@ -205,6 +232,7 @@ export default function Dashboard({ userId, userEmail }) {
     const next = !autopilotPaused;
     if (next && !window.confirm("Pause all automatic reminders? Nobody will be emailed until you resume. Bookings and your calendar keep working.")) return;
     setPauseBusy(true);
+    setAutopilotPaused(next); // the switch flips at once; it flips back if saving fails
     try {
       const res = await fetch("/api/settings/business", {
         method: "PATCH",
@@ -216,6 +244,7 @@ export default function Dashboard({ userId, userEmail }) {
       setAutopilotPaused(!!data.autopilotPaused);
       showToast(next ? "Reminders paused" : "Reminders are back on ✓");
     } catch (err) {
+      setAutopilotPaused(!next);
       showToast(err.message);
     }
     setPauseBusy(false);
@@ -252,65 +281,58 @@ export default function Dashboard({ userId, userEmail }) {
     if (activeView === "archived") loadArchivedDogs();
   }, [activeView]);
 
-  // Supabase Realtime: the instant an owner books a slot through their
-  // booking link, this fires - no page refresh, no polling needed.
+  // Supabase Realtime: any change to this salon's bookings or dogs reaches the
+  // screen the moment it is saved - another tab, another device, the owner
+  // booking, the hourly reminder run. Two details matter here:
+  //  - Supabase cannot filter DELETE events, so a filtered listener never hears
+  //    a cancelled booking. DELETE is therefore listened to unfiltered, and the
+  //    event is only used as a "something changed, re-read" signal (it carries
+  //    no data we rely on).
+  //  - When the connection (re)opens we re-read everything, so a missed event
+  //    while offline is caught up straight away.
   useEffect(() => {
     if (!userId) return;
-    let cancelled = false;
     const supabase = createSupabaseBrowserClient();
-    const channelName = `bookings-changes-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const channelName = `salon-live-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const mine = `user_id=eq.${userId}`;
     const channel = supabase.channel(channelName);
 
-    if (!cancelled) {
-      channel
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
-          () => {
-            showToast("🎉 New booking just came in!");
-            loadBookings();
-          }
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (payload.eventType !== "INSERT") loadBookings();
-          }
-        )
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "dogs", filter: `user_id=eq.${userId}` },
-          () => {
-            // Covers reminder sends (last_reminder_sent_at changing) as well
-            // as edits made from another tab - either way, refresh silently
-            // rather than toast on every single field change.
-            loadDogs();
-          }
-        )
-        .subscribe();
-    }
+    channel
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bookings", filter: mine }, () => {
+        showToast("🎉 New booking just came in!");
+        syncAll(0);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bookings", filter: mine }, () => syncAll(0))
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "bookings" }, () => syncAll(0))
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dogs", filter: mine }, () => syncAll())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "dogs", filter: mine }, () => syncAll())
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "dogs" }, () => syncAll())
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") syncAll(0);
+      });
 
     return () => {
-      cancelled = true;
       supabase.removeChannel(channel);
     };
   }, [userId]);
 
-  // Safety net next to Realtime: if the live connection drops (sleeping laptop,
-  // flaky wifi), bookings still catch up within a minute and whenever the tab
-  // is opened again.
+  // Safety net next to Realtime (sleeping laptop, flaky wifi, a blocked
+  // websocket on a salon's network): everything re-reads every 15 seconds while
+  // the tab is open and visible, and instantly when the tab is focused, shown,
+  // or the connection comes back.
   useEffect(() => {
     const refresh = () => {
-      if (document.visibilityState === "visible") loadBookings();
+      if (document.visibilityState === "visible") syncAll(0);
     };
-    const timer = setInterval(refresh, 60000);
+    const timer = setInterval(refresh, 15000);
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("focus", refresh);
+    window.addEventListener("online", refresh);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener("online", refresh);
     };
   }, []);
 
@@ -318,17 +340,29 @@ export default function Dashboard({ userId, userEmail }) {
     const name = b.dogs?.dog_name || "this dog";
     const note = b.dogs?.owner_email ? " The owner will get an email." : " The owner has no email on file, so tell them yourself.";
     if (!window.confirm(`Cancel ${name}'s booking?${note}`)) return;
-    const res = await fetch("/api/bookings/cancel", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: b.id }),
-    });
-    if (res.ok) {
-      showToast("Booking cancelled");
-      loadBookings();
+    // Gone from the screen the instant they confirm; put back only if the
+    // server says no.
+    const before = bookings;
+    bookingsReq.current++;
+    setBookings((prev) => prev.filter((x) => x.id !== b.id));
+    showToast("Booking cancelled");
+    let res;
+    try {
+      res = await fetch("/api/bookings/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: b.id }),
+      });
+    } catch {
+      res = null;
+    }
+    if (res && res.ok) {
+      syncAll(0);
     } else {
-      const data = await res.json().catch(() => ({}));
+      const data = res ? await res.json().catch(() => ({})) : {};
+      setBookings(before);
       showToast(data.error || "Could not cancel the booking", "error");
+      syncAll(0);
     }
   }
 
@@ -477,7 +511,7 @@ export default function Dashboard({ userId, userEmail }) {
       if (res.ok) {
         showToast(`${form.dogName} updated ✓`);
         closeModal();
-        await loadDogs();
+        syncAll(0);
       } else {
         setError("Could not save changes");
       }
@@ -485,50 +519,91 @@ export default function Dashboard({ userId, userEmail }) {
     setModalSaving(false);
   }
 
-  async function markGroomed(dog) {
+  // Shared by the one-dog actions below: change the screen first, ask the
+  // server second, and put the screen back (with a message) if the server says
+  // no. Either way the final state is re-read so screen and database agree.
+  async function patchDogNow(dog, body, localChange, doneMessage) {
     setBusyId(dog.id);
-    await fetch(`/api/dogs/${dog.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markGroomedToday: true }),
-    });
-    showToast(`${dog.dog_name} marked as groomed today ✓`);
-    await loadDogs();
+    const before = dogs;
+    dogsReq.current++;
+    setDogs(localChange);
+    let ok = false;
+    try {
+      const res = await fetch(`/api/dogs/${dog.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      ok = res.ok;
+    } catch {}
+    if (ok) {
+      showToast(doneMessage);
+    } else {
+      setDogs(before);
+      showToast(`Could not update ${dog.dog_name}. Nothing was changed.`, "error");
+    }
+    syncAll(0);
     setBusyId(null);
   }
 
-  async function archiveDog(dog) {
-    setBusyId(dog.id);
-    await fetch(`/api/dogs/${dog.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isArchived: true }),
-    });
-    showToast(`${dog.dog_name} archived`);
-    await loadDogs();
-    setBusyId(null);
+  function markGroomed(dog) {
+    const today = dayKey(new Date(), timezone);
+    return patchDogNow(
+      dog,
+      { markGroomedToday: true },
+      (prev) => prev.map((d) => (d.id === dog.id ? { ...d, last_groom_date: today } : d)),
+      `${dog.dog_name} marked as groomed today ✓`
+    );
+  }
+
+  function archiveDog(dog) {
+    return patchDogNow(
+      dog,
+      { isArchived: true },
+      (prev) => prev.filter((d) => d.id !== dog.id),
+      `${dog.dog_name} archived`
+    );
   }
 
   async function restoreDog(dog) {
     setBusyId(dog.id);
-    await fetch(`/api/dogs/${dog.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isArchived: false }),
-    });
-    showToast(`${dog.dog_name} restored`);
+    const beforeArchived = archivedDogs;
+    setArchivedDogs((prev) => prev.filter((d) => d.id !== dog.id));
+    let ok = false;
+    try {
+      const res = await fetch(`/api/dogs/${dog.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: false }),
+      });
+      ok = res.ok;
+    } catch {}
+    if (ok) showToast(`${dog.dog_name} restored`);
+    else {
+      setArchivedDogs(beforeArchived);
+      showToast(`Could not restore ${dog.dog_name}.`, "error");
+    }
     await loadArchivedDogs();
-    await loadDogs();
+    syncAll(0);
     setBusyId(null);
   }
 
   async function deleteDog(dog) {
     if (!confirm(`Permanently delete ${dog.dog_name}? This can't be undone - consider Archive instead.`)) return;
     setBusyId(dog.id);
-    await fetch(`/api/dogs/${dog.id}`, { method: "DELETE" });
-    showToast(`${dog.dog_name} permanently deleted`);
+    const beforeArchived = archivedDogs;
+    setArchivedDogs((prev) => prev.filter((d) => d.id !== dog.id));
+    let ok = false;
+    try {
+      ok = (await fetch(`/api/dogs/${dog.id}`, { method: "DELETE" })).ok;
+    } catch {}
+    if (ok) showToast(`${dog.dog_name} permanently deleted`);
+    else {
+      setArchivedDogs(beforeArchived);
+      showToast(`Could not delete ${dog.dog_name}.`, "error");
+    }
     await loadArchivedDogs();
-    await loadDogs();
+    syncAll(0);
     setBusyId(null);
   }
 
@@ -609,26 +684,31 @@ export default function Dashboard({ userId, userEmail }) {
   async function bulkMarkGroomed() {
     const ids = [...selectedIds];
     setBusyId("bulk");
+    const today = dayKey(new Date(), timezone);
+    dogsReq.current++;
+    setDogs((prev) => prev.map((d) => (ids.includes(d.id) ? { ...d, last_groom_date: today } : d)));
+    setSelectedIds(new Set());
     await Promise.all(ids.map((id) => fetch(`/api/dogs/${id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ markGroomedToday: true }),
-    })));
+    }).catch(() => null)));
     showToast(`${ids.length} dog${ids.length === 1 ? "" : "s"} marked as groomed today ✓`);
-    setSelectedIds(new Set());
-    await loadDogs();
+    syncAll(0);
     setBusyId(null);
   }
 
   async function bulkArchive() {
     const ids = [...selectedIds];
     setBusyId("bulk");
+    dogsReq.current++;
+    setDogs((prev) => prev.filter((d) => !ids.includes(d.id)));
+    setSelectedIds(new Set());
     await Promise.all(ids.map((id) => fetch(`/api/dogs/${id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isArchived: true }),
-    })));
+    }).catch(() => null)));
     showToast(`${ids.length} dog${ids.length === 1 ? "" : "s"} archived`);
-    setSelectedIds(new Set());
-    await loadDogs();
+    syncAll(0);
     setBusyId(null);
   }
 
@@ -906,7 +986,7 @@ export default function Dashboard({ userId, userEmail }) {
             {homeReady && <GetStarted steps={setupSteps} />}
             {homeReady && dogs.length > 0 && (
               <HandledBand stats={stats}>
-                <RecoveredTile />
+                <RecoveredTile refreshKey={syncKey} />
               </HandledBand>
             )}
             {homeReady && dogs.length > 0 && (
@@ -1135,7 +1215,7 @@ export default function Dashboard({ userId, userEmail }) {
         {/* ---------- Analytics view ---------- */}
         {activeView === "analytics" && (
           <div className="pd-analytics-grid">
-            <RevenueChart />
+            <RevenueChart refreshKey={syncKey} />
             <StatusDonut counts={counts} />
             <ReminderBreakdown dogs={dogs} />
             <ActivityFeed dogs={dogs} bookings={bookings} />
@@ -1509,7 +1589,7 @@ export default function Dashboard({ userId, userEmail }) {
           rows={lapsedRows}
           draftFor={winbackDraft}
           onClose={() => setWinbackOpen(false)}
-          onSent={() => loadDogs()}
+          onSent={() => syncAll(0)}
         />
       )}
 

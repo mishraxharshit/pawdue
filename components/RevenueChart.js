@@ -4,15 +4,15 @@ function formatMoney(n) {
   return `$${Math.round(n).toLocaleString()}`;
 }
 
-export default function RevenueChart() {
+export default function RevenueChart({ refreshKey = 0 }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    fetch("/api/stats/revenue-timeseries")
+    fetch("/api/stats/revenue-timeseries", { cache: "no-store" })
       .then((r) => r.json())
       .then(setData)
       .catch(() => {});
-  }, []);
+  }, [refreshKey]);
 
   if (!data) return <div className="pd-chart-card pd-chart-loading" />;
 
