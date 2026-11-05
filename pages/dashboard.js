@@ -15,6 +15,7 @@ import CalendarFeedCard from "../components/CalendarFeedCard";
 import LocalTimeNow from "../components/LocalTimeNow";
 import RecoveredTile from "../components/RecoveredTile";
 import WinbackModal from "../components/WinbackModal";
+import ServicesEditor from "../components/ServicesEditor";
 import SetupBanner from "../components/SetupBanner";
 import { HomeHeader, PausedNotice, HandledBand, NeedsYou, TodaySchedule, ComingUp, GetStarted } from "../components/HomeToday";
 import { dayKey, weekStats, failedReminderDogs, comingUp } from "../lib/homeToday";
@@ -83,7 +84,7 @@ export default function Dashboard({ userId, userEmail }) {
   const [dogs, setDogs] = useState([]);
   const [archivedDogs, setArchivedDogs] = useState([]);
   const [activeView, setActiveView] = useState("home"); // 'home' | 'dogs' (Clients) | 'analytics' | 'bookings' | 'archived' | 'settings' | 'billing'
-  const [settingsTab, setSettingsTab] = useState("business"); // 'autopilot' | 'business' | 'hours' | 'calendar' | 'account'
+  const [settingsTab, setSettingsTab] = useState("business"); // 'autopilot' | 'business' | 'services' | 'hours' | 'calendar' | 'account'
   const [isLoading, setIsLoading] = useState(true);
   // Home mixes dogs, bookings and settings. Until all three have answered, show
   // nothing rather than a half-true picture (e.g. "set up your salon" flashing
@@ -1308,7 +1309,7 @@ export default function Dashboard({ userId, userEmail }) {
         {activeView === "settings" && (
           <div className="pd-settings-wrap">
           <div className="pd-tabs" role="tablist" aria-label="Settings sections">
-            {[["autopilot", "Autopilot"], ["business", "Business"], ["hours", "Booking hours"], ["calendar", "Calendar"], ["account", "Account"]].map(([k, label]) => (
+            {[["autopilot", "Autopilot"], ["business", "Business"], ["services", "Services"], ["hours", "Booking hours"], ["calendar", "Calendar"], ["account", "Account"]].map(([k, label]) => (
               <button key={k} role="tab" aria-selected={settingsTab === k} className={`pd-tab ${settingsTab === k ? "active" : ""}`} onClick={() => setSettingsTab(k)}>{label}</button>
             ))}
           </div>
@@ -1507,6 +1508,7 @@ export default function Dashboard({ userId, userEmail }) {
           </div>
           )}
 
+          {settingsTab === "services" && <ServicesEditor onToast={showToast} />}
           {settingsTab === "calendar" && (
           <div className="pd-settings-col">
             <CalendarFeedCard />
