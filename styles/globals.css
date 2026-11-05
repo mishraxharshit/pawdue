@@ -1425,3 +1425,22 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
 .pd-ap-preview-salon { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1F5C4F; }
 .pd-ap-preview-title { font-weight: 800; font-size: 1rem; margin: 6px 0; }
 .pd-ap-preview-btn { display: inline-block; margin-top: 12px; background: #B8461F; color: #fff; font-weight: 700; font-size: .82rem; border-radius: 99px; padding: 9px 18px; }
+/* ---- Settings > Services ---- */
+.pd-svc-suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.pd-svc-group { margin-top: 16px; }
+.pd-svc-cat { margin: 0 0 6px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--sub); }
+.pd-svc-list { list-style: none; margin: 0; padding: 0; }
+.pd-svc-list li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.pd-svc-list li.is-off { opacity: .55; }
+.pd-svc-price { margin-left: 10px; font-weight: 700; color: var(--accent); }
+.pd-svc-hidden { margin-left: 10px; font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--sub); }
+.pd-svc-actions { display: flex; gap: 12px; align-items: flex-start; flex-shrink: 0; }
+.pd-svc-mode { display: flex; gap: 8px; margin: 4px 0 10px; }
+.pd-svc-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 520px) { .pd-svc-list li { flex-direction: column; } }
+.pd-svc-divider { margin: 22px 0 0; font-size: .85rem; color: var(--sub); border-top: 2px dashed var(--line); padding-top: 14px; }
+.pd-svc-check { display: flex; gap: 8px; align-items: center; margin: 10px 0 14px; font-weight: 500; }
+.pd-svc-check input { width: auto; margin: 0; }
+.pd-svc-actions { flex-wrap: wrap; justify-content: flex-end; }
+.pd-settings-col textarea { font: inherit; width: 100%; }
+.pd-svc-divider { margin-top: 12px; }

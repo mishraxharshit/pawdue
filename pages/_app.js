@@ -1,16 +1,20 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "../styles/globals.css";
 import { LanguageProvider } from "../lib/i18n/LanguageContext";
 
-const bodyFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+// Plus Jakarta Sans (SIL Open Font License), served from our own repo instead of
+// fetched from Google Fonts at build time. A build can no longer fail, or get
+// slower, because Google answered oddly. One variable font file covers every
+// weight from 200 to 800.
+const bodyFont = localFont({
+  src: [{ path: "../styles/fonts/plus-jakarta-sans-latin.woff2", weight: "200 800", style: "normal" }],
   variable: "--font-body",
+  display: "swap",
 });
-const displayFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["700", "800"],
+const displayFont = localFont({
+  src: [{ path: "../styles/fonts/plus-jakarta-sans-latin.woff2", weight: "200 800", style: "normal" }],
   variable: "--font-display",
+  display: "swap",
 });
 
 // Language is detected from the browser only (navigator.language) - no
