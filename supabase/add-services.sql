@@ -57,6 +57,7 @@ alter table public.bookings
   add column if not exists service_name text,
   add column if not exists dog_size text,
   add column if not exists price numeric(8,2),
+  add column if not exists price_is_starting boolean not null default false,
   add column if not exists currency text,
   add column if not exists addons jsonb,
   add column if not exists duration_minutes integer;

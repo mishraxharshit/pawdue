@@ -2,6 +2,8 @@ import { createSupabaseAdminClient } from "../../../../lib/supabase/admin";
 import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../../lib/booking";
 import { rateLimit } from "../../../../lib/rateLimit";
 import { computeStatus } from "../../../../lib/breedIntervals";
+import { loadActiveServices, loadShopSettings, loadDogSize } from "../../../../lib/bookingMenu";
+import { publicService, menuRequiresChoice } from "../../../../lib/bookingServices";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
@@ -27,10 +29,13 @@ export default async function handler(req, res) {
   // These three lookups do not depend on each other, so run them together
   // instead of one after another (each is a network round trip to Supabase).
   // Only upcoming bookings matter for availability, so old ones are skipped.
-  const [bookingsRes, settings, timezone] = await Promise.all([
+  const [bookingsRes, settings, timezone, services, shop, dogSize] = await Promise.all([
     admin.from("bookings").select("slot_at").eq("user_id", dog.user_id).gte("slot_at", new Date().toISOString()),
     getAvailabilitySettings(admin, dog.user_id),
     getBusinessTimezone(admin, dog.user_id),
+    loadActiveServices(admin, dog.user_id),
+    loadShopSettings(admin, dog.user_id),
+    loadDogSize(admin, dog.id),
   ]);
 
   const bookedIso = new Set((bookingsRes.data || []).map((b) => new Date(b.slot_at).toISOString()));
@@ -50,6 +55,17 @@ export default async function handler(req, res) {
     breed: dog.breed,
     slots,
     timezone,
+    // The groomer's menu, only when they have set one up. Without it the page
+    // books a plain slot exactly as before.
+    menu: menuRequiresChoice(services)
+      ? {
+          services: services.map(publicService),
+          currency: shop.currency,
+          sizeGuide: shop.sizeGuide,
+          bookingNote: shop.bookingNote,
+          dogSize,
+        }
+      : null,
     status: {
       state: comp.status,
       daysLeft: comp.daysLeft,

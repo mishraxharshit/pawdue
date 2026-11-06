@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { groupSlotsByDay } from "../../lib/booking";
 import ClientStatusCard from "../../components/ClientStatusCard";
+import BookingServicePicker from "../../components/BookingServicePicker";
+import { priceSelection } from "../../lib/bookingServices";
+import { currencySymbol } from "../../lib/services";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 
 export default function BookingPage() {
@@ -15,6 +18,7 @@ export default function BookingPage() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(null);
+  const [pick, setPick] = useState({ serviceId: "", addonIds: [], size: "" });
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
 
@@ -25,7 +29,11 @@ export default function BookingPage() {
         if (!res.ok) throw new Error((await res.json()).error || translate("booking.couldNotLoad"));
         return res.json();
       })
-      .then(setInfo)
+      .then((data) => {
+        setInfo(data);
+        // A size saved from an earlier booking is already selected.
+        if (data.menu?.dogSize) setPick((p) => ({ ...p, size: data.menu.dogSize }));
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -37,7 +45,7 @@ export default function BookingPage() {
       const res = await fetch("/api/bookings/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, slot: selectedSlot }),
+        body: JSON.stringify({ token, slot: selectedSlot, ...(info.menu ? pick : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || translate("booking.couldNotBook"));
@@ -78,7 +86,7 @@ export default function BookingPage() {
     return (
       <div className="wrap authcard">
         <div className="card">
-          <h1>Paw<span>Due</span></h1>
+          <h1 translate="no">Paw<span>Due</span></h1>
           <p className="sub" style={{ marginTop: 10 }}>{translate("booking.optedOutMessage")}</p>
         </div>
       </div>
@@ -89,7 +97,7 @@ export default function BookingPage() {
     return (
       <div className="wrap authcard">
         <div className="card">
-          <h1>Paw<span>Due</span></h1>
+          <h1 translate="no">Paw<span>Due</span></h1>
           <p className="error">{error}</p>
         </div>
       </div>
@@ -102,10 +110,25 @@ export default function BookingPage() {
     return (
       <div className="wrap authcard">
         <div className="card">
-          <h1>Paw<span>Due</span></h1>
+          <h1 translate="no">Paw<span>Due</span></h1>
           <p style={{ fontSize: "1.05rem", marginTop: 10 }}>
             {translate("booking.confirmed", { dog: confirmed.dogName, when })}
           </p>
+          {confirmed.summary && (
+            <div className="pd-pick-total" style={{ marginTop: 14 }}>
+              {confirmed.summary.lines.map((l) => (
+                <span key={l.id} className="pd-pick-line">
+                  <span>{l.name}</span>
+                  <span translate="no">{`${currencySymbol(confirmed.summary.currency)}${l.price}${l.starting ? "+" : ""}`}</span>
+                </span>
+              ))}
+              <span className="pd-pick-line"><b>{translate("booking.yourTotal")}</b><b translate="no">{`${currencySymbol(confirmed.summary.currency)}${confirmed.summary.total}${confirmed.summary.isStarting ? "+" : ""}`}</b></span>
+              {confirmed.summary.isStarting && <span className="pd-pick-desc">{translate("booking.startingNote")}</span>}
+            </div>
+          )}
+          {confirmed.summary?.bookingNote && (
+            <p className="pd-pick-note"><b>{translate("booking.groomerNote")}:</b> {confirmed.summary.bookingNote}</p>
+          )}
         </div>
       </div>
     );
@@ -116,7 +139,7 @@ export default function BookingPage() {
   return (
     <div className="wrap" style={{ maxWidth: 480 }}>
       <div className="card">
-        <h1>Paw<span>Due</span></h1>
+        <h1 translate="no">Paw<span>Due</span></h1>
 
         {info.status && <ClientStatusCard status={info.status} dogName={info.dogName} breed={info.breed} />}
 
@@ -124,9 +147,13 @@ export default function BookingPage() {
         {info.timezone && info.timezone !== "UTC" && (
           <p className="sub" style={{ marginTop: 0, fontSize: "0.8rem" }}>Times shown in {info.timezone.replace(/_/g, " ")} time</p>
         )}
-        <p style={{ fontSize: "1.1rem", fontWeight: 700, marginTop: 0 }}>
+        <p translate="no" style={{ fontSize: "1.1rem", fontWeight: 700, marginTop: 0 }}>
           {info.dogName} <span style={{ fontWeight: 400, color: "var(--sub)" }}>· {info.breed}</span>
         </p>
+
+        {info.menu && (
+          <BookingServicePicker menu={info.menu} dogName={info.dogName} pick={pick} onChange={setPick} translate={translate} />
+        )}
 
         {Object.keys(grouped).length === 0 && (
           <p className="sub">{translate("booking.noSlots")}</p>
@@ -139,6 +166,7 @@ export default function BookingPage() {
               {isoSlots.map((iso) => (
                 <button
                   key={iso}
+                  translate="no"
                   className={selectedSlot === iso ? "small" : "ghost small"}
                   onClick={() => setSelectedSlot(iso)}
                 >
@@ -151,9 +179,16 @@ export default function BookingPage() {
 
         {error && <div className="error">{error}</div>}
 
+        {selectedSlot && info.menu && !priceSelection(info.menu.services, pick).value && (
+          <p className="sub" style={{ marginTop: 10 }}>{translate("booking.pickServiceFirst")}</p>
+        )}
         {selectedSlot && (
-          <button style={{ marginTop: 10 }} onClick={handleConfirm} disabled={confirming}>
-            {confirming ? translate("booking.booking") : translate("booking.confirmSlot")}
+          <button
+            style={{ marginTop: 10 }}
+            onClick={handleConfirm}
+            disabled={confirming || (info.menu && !priceSelection(info.menu.services, pick).value)}
+          >
+            <span>{confirming ? translate("booking.booking") : translate("booking.confirmSlot")}</span>
           </button>
         )}
 

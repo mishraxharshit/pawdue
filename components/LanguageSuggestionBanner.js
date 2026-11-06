@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 
-const PROMPT_COPY = {
-  hi: { text: "लगता है आप भारत से ब्राउज़ कर रहे हैंहिन्दी में बदलें?", switch: "हिन्दी में बदलें", no: "नहीं, रहने दें" },
-  es: { text: "Parece que estás navegando desde un país de habla hispana¿cambiar a Español?", switch: "Cambiar a Español", no: "No, gracias" },
-};
+// English only for now, so there is nothing to suggest. Add an entry per language
+// (text, switch, no) when a second language is added to translations.js.
+const PROMPT_COPY = {};
 
 function readCookie(name) {
   if (typeof document === "undefined") return null;
