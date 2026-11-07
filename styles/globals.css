@@ -1425,6 +1425,7 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
 .pd-ap-preview-salon { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1F5C4F; }
 .pd-ap-preview-title { font-weight: 800; font-size: 1rem; margin: 6px 0; }
 .pd-ap-preview-btn { display: inline-block; margin-top: 12px; background: #B8461F; color: #fff; font-weight: 700; font-size: .82rem; border-radius: 99px; padding: 9px 18px; }
+
 /* ---- Settings > Services ---- */
 .pd-svc-suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .pd-svc-group { margin-top: 16px; }
@@ -1444,6 +1445,7 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
 .pd-svc-actions { flex-wrap: wrap; justify-content: flex-end; }
 .pd-settings-col textarea { font: inherit; width: 100%; }
 .pd-svc-divider { margin-top: 12px; }
+
 /* ---- Booking page: choose a service ---- */
 .pd-pick { margin: 18px 0 8px; }
 .pd-pick-title { margin: 14px 0 8px; font-weight: 700; }
@@ -1468,3 +1470,25 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
 .pd-pick-line { display: flex; justify-content: space-between; gap: 10px; }
 .pd-pick-note { margin: 10px 0 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: #fff; font-size: .85rem; color: var(--sub); }
 @media (max-width: 420px) { .pd-pick-sizes { grid-template-columns: 1fr; } }
+.pd-sched-service { display: block; font-size: .8rem; }
+
+/* ============================================================
+   Bookings table: own layout so it never inherits the dog-card areas
+   ============================================================ */
+.pd-trow.pd-trow-bk { grid-template-columns: 2fr 1.6fr 1.3fr 1.2fr; }
+.pd-trow.pd-trow-bk.has-svc { grid-template-columns: 1.8fr 1.4fr 1.8fr 1.2fr 1.1fr; }
+.pd-bk-owner, .pd-bk-svc { font-size: .85rem; min-width: 0; overflow-wrap: anywhere; }
+.pd-bk-svc .sub { color: var(--sub); }
+@media (max-width: 1180px) {
+  .pd-trow.pd-trow-bk.pd-thead { display: none; }
+  .pd-trow.pd-trow-bk:not(.pd-thead), .pd-trow.pd-trow-bk.has-svc:not(.pd-thead) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "dog status" "svc svc" "owner when";
+    row-gap: 10px; align-items: start; padding: 14px;
+  }
+  .pd-trow-bk .pd-bk-dog { grid-area: dog; }
+  .pd-trow-bk .pd-bk-status { grid-area: status; text-align: right; }
+  .pd-trow-bk .pd-bk-svc { grid-area: svc; }
+  .pd-trow-bk .pd-bk-owner { grid-area: owner; }
+  .pd-trow-bk .pd-bk-when { grid-area: when; text-align: right; }
+}

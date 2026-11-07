@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   const admin = createSupabaseAdminClient();
   const { data: booking } = await admin
     .from("bookings")
-    .select("id, user_id, dog_id, slot_at")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
   if (!booking || booking.user_id !== user.id) return res.status(404).json({ error: "Booking not found" });

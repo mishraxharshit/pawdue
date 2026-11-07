@@ -2,7 +2,8 @@ import { createSupabaseAdminClient } from "../../../../lib/supabase/admin";
 import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../../lib/booking";
 import { rateLimit } from "../../../../lib/rateLimit";
 import { computeStatus } from "../../../../lib/breedIntervals";
-import { loadActiveServices, loadShopSettings, loadDogSize } from "../../../../lib/bookingMenu";
+import { loadActiveServices, loadShopSettings, loadDogSize, loadLastPick } from "../../../../lib/bookingMenu";
+import { suggestSize } from "../../../../lib/breedSize";
 import { publicService, menuRequiresChoice } from "../../../../lib/bookingServices";
 
 export default async function handler(req, res) {
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
     loadDogSize(admin, dog.id),
   ]);
 
+  const lastPick = menuRequiresChoice(services) ? await loadLastPick(admin, dog.id, services) : null;
   const bookedIso = new Set((bookingsRes.data || []).map((b) => new Date(b.slot_at).toISOString()));
   const slots = generateAvailableSlots(bookedIso, settings, timezone);
 
@@ -64,6 +66,10 @@ export default async function handler(req, res) {
           sizeGuide: shop.sizeGuide,
           bookingNote: shop.bookingNote,
           dogSize,
+          // A guess from the breed, only used when no size is saved yet.
+          suggestedSize: dogSize ? null : suggestSize(dog.breed),
+          // What this dog booked last time, if it is still on the menu.
+          lastPick,
         }
       : null,
     status: {

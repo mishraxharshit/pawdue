@@ -16,6 +16,7 @@ import LocalTimeNow from "../components/LocalTimeNow";
 import RecoveredTile from "../components/RecoveredTile";
 import WinbackModal from "../components/WinbackModal";
 import ServicesEditor from "../components/ServicesEditor";
+import { describeBooking, moneyText } from "../lib/bookingDetails";
 import SetupBanner from "../components/SetupBanner";
 import { HomeHeader, PausedNotice, HandledBand, NeedsYou, TodaySchedule, ComingUp, GetStarted } from "../components/HomeToday";
 import { dayKey, weekStats, failedReminderDogs, comingUp } from "../lib/homeToday";
@@ -91,6 +92,10 @@ export default function Dashboard({ userId, userEmail }) {
   // for an account that already did).
   const [bookingsReady, setBookingsReady] = useState(false);
   const [settingsReady, setSettingsReady] = useState(false);
+  // How many active services the groomer has. null = not known (for example the
+  // services table has not been created yet), so no checklist nag is shown.
+  const [servicesCount, setServicesCount] = useState(null);
+  const [servicesReady, setServicesReady] = useState(false);
   const [filter, setFilter] = useState("all");
   const [groupBy, setGroupBy] = useState("status"); // 'status' | 'name'
   const [search, setSearch] = useState("");
@@ -194,6 +199,7 @@ export default function Dashboard({ userId, userEmail }) {
       syncTimer.current = null;
       loadDogs();
       loadBookings();
+      loadServicesCount();
       setSyncKey((k) => k + 1);
     }, delay);
   }
@@ -206,6 +212,19 @@ export default function Dashboard({ userId, userEmail }) {
       setAvailabilityForm(data);
       setBreakEnabled(!!(data.breakStart && data.breakEnd));
     }
+  }
+
+  async function loadServicesCount() {
+    try {
+      const res = await fetch("/api/services", { cache: "no-store" });
+      if (res.ok) {
+        const rows = await res.json();
+        setServicesCount(rows.filter((s) => s.is_active).length);
+      } else {
+        setServicesCount(null);
+      }
+    } catch {}
+    setServicesReady(true);
   }
 
   async function loadBusinessSettings() {
@@ -274,6 +293,7 @@ export default function Dashboard({ userId, userEmail }) {
     loadDogs();
     loadBilling();
     loadBookings();
+    loadServicesCount();
     loadAvailability();
     loadBusinessSettings();
   }, []);
@@ -746,8 +766,13 @@ export default function Dashboard({ userId, userEmail }) {
   const setupSteps = [
     { key: "name", title: "Add your salon name", hint: "It shows on reminders and booking emails.", done: !!(profile.businessName || "").trim(), actionLabel: "Add", onAction: () => { setSettingsTab("business"); setActiveView("settings"); } },
     { key: "dogs", title: "Add your dogs", hint: "Add one by one or import a CSV.", done: dogs.length > 0, actionLabel: "Import CSV", onAction: () => setImportOpen(true) },
+    // Only offered once the services table exists (servicesCount is null until then).
+    ...(servicesCount === null
+      ? []
+      : [{ key: "services", title: "Add your services and prices", hint: "Clients pick from your menu when they book.", done: servicesCount > 0, actionLabel: "Add", onAction: () => { setSettingsTab("services"); setActiveView("settings"); } }]),
   ];
-  const homeReady = !isLoading && bookingsReady && settingsReady;
+  const bookingsHaveService = bookings.some((b) => b.service_name);
+  const homeReady = !isLoading && bookingsReady && settingsReady && servicesReady;
   const stats = weekStats(dogs, bookings);
   const failedDogs = failedReminderDogs(dogs);
   const upcoming = comingUp(withComp, timezone);
@@ -1230,30 +1255,37 @@ export default function Dashboard({ userId, userEmail }) {
               <div className="pd-tempty">No upcoming bookings yet. They&apos;ll show up here the moment an owner books through their reminder link.</div>
             ) : (
               <>
-                <div className="pd-trow pd-thead" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1.2fr" }}>
+                <div className={`pd-trow pd-thead pd-trow-bk${bookingsHaveService ? " has-svc" : ""}`}>
                   <div>Dog</div>
-                  <div className="pd-thead-owner">Owner</div>
+                  <div>Owner</div>
+                  {bookingsHaveService && <div>Service</div>}
                   <div>When</div>
                   <div>Status</div>
                 </div>
                 {bookings.map((b) => (
-                  <div className="pd-trow" style={{ gridTemplateColumns: "2fr 1.6fr 1.3fr 1.2fr" }} key={b.id}>
-                    <div className="pd-tcell-dog">
+                  <div className={`pd-trow pd-trow-bk${bookingsHaveService ? " has-svc" : ""}`} key={b.id}>
+                    <div className="pd-tcell-dog pd-bk-dog">
                       <Avatar name={b.dogs?.dog_name || "?"} size={32} />
                       <div>
                         <div className="pd-tcell-dog-name">{b.dogs?.dog_name}</div>
                         <div className="pd-tcell-dog-breed">{b.dogs?.breed}</div>
                       </div>
                     </div>
-                    <div className="pd-tcell-owner">
+                    <div className="pd-bk-owner">
                       {b.dogs?.owner_name}
                       {b.dogs?.phone && <div className="pd-tcell-due-sub">{b.dogs.phone}</div>}
                     </div>
-                    <div className="pd-tcell-due">
+                    {bookingsHaveService && (
+                      <div className="pd-bk-svc">
+                        {b.service_name ? describeBooking(b).withSize : <span className="sub">Not chosen</span>}
+                        {b.price != null && <div className="pd-tcell-due-sub">{moneyText(b.price, b.currency, b.price_is_starting)}{b.addons?.length ? ` incl. ${b.addons.map((a) => a.name).join(", ")}` : ""}</div>}
+                      </div>
+                    )}
+                    <div className="pd-tcell-due pd-bk-when">
                       {new Date(b.slot_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: timezone })}
                       <div className="pd-tcell-due-sub">{new Date(b.slot_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })}</div>
                     </div>
-                    <div>
+                    <div className="pd-bk-status">
                       <span className="badge ok">{b.status}</span>
                       {Date.now() - new Date(b.created_at).getTime() < 24 * 3600 * 1000 && <span className="badge" style={{ marginLeft: 6 }}>New</span>}
                       <div><button className="ghost" style={{ marginTop: 6, padding: "4px 10px", fontSize: ".78rem" }} onClick={() => cancelBooking(b)}>Cancel</button></div>

@@ -58,6 +58,9 @@ export default function BookingServicePicker({ menu, dogName, pick, onChange, tr
       {sizeNeeded && (
         <>
           <p className="pd-pick-title">{translate("booking.dogSize")}</p>
+          {!menu.dogSize && menu.suggestedSize && pick.size === menu.suggestedSize && (
+            <p className="pd-pick-desc" style={{ margin: "-4px 0 8px" }}>{translate("booking.sizeGuess")}</p>
+          )}
           <div className="pd-pick-sizes" role="radiogroup" aria-label={translate("booking.dogSize")}>
             {SIZES.map(([key, label]) => (
               <button
