@@ -31,8 +31,16 @@ export default function BookingPage() {
       })
       .then((data) => {
         setInfo(data);
-        // A size saved from an earlier booking is already selected.
-        if (data.menu?.dogSize) setPick((p) => ({ ...p, size: data.menu.dogSize }));
+        // Start from what this dog booked last time and the size we know (or
+        // guess from the breed); the owner can change any of it.
+        if (data.menu) {
+          setPick((p) => ({
+            ...p,
+            serviceId: data.menu.lastPick?.serviceId || p.serviceId,
+            addonIds: data.menu.lastPick?.addonIds || p.addonIds,
+            size: data.menu.dogSize || data.menu.suggestedSize || p.size,
+          }));
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

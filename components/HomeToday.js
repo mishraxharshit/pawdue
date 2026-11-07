@@ -7,6 +7,7 @@
 //   ComingUp       dogs whose reminder goes out this week
 //   GetStarted     setup checklist for new accounts
 
+import { moneyText } from "../lib/bookingDetails";
 import { useState } from "react";
 import { dayKey, timeLabel, greetingFor } from "../lib/homeToday";
 
@@ -265,6 +266,7 @@ export function TodaySchedule({ bookings, dogs, timezone, busyId, onGroomed, onO
                   <span>
                     <b>{b.dogs?.dog_name || "Dog"}</b>
                     {b.dogs?.owner_name ? <span className="sub"> · {b.dogs.owner_name}</span> : null}
+                    {b.service_name ? <span className="sub pd-sched-service">{b.service_name}{b.price ? ` · ${moneyText(b.price, b.currency, b.price_is_starting)}` : ""}</span> : null}
                   </span>
                   {dog && <button className="small ghost" onClick={() => onGroomed(dog)} disabled={busyId === dog.id}>Groomed</button>}
                 </span>
