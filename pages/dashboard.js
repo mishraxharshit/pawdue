@@ -16,6 +16,9 @@ import LocalTimeNow from "../components/LocalTimeNow";
 import RecoveredTile from "../components/RecoveredTile";
 import WinbackModal from "../components/WinbackModal";
 import ServicesEditor from "../components/ServicesEditor";
+import ServiceInsights from "../components/ServiceInsights";
+import MarkPaidModal from "../components/MarkPaidModal";
+import { paidSummary } from "../lib/payments";
 import { describeBooking, moneyText } from "../lib/bookingDetails";
 import SetupBanner from "../components/SetupBanner";
 import { HomeHeader, PausedNotice, HandledBand, NeedsYou, TodaySchedule, ComingUp, GetStarted } from "../components/HomeToday";
@@ -113,6 +116,11 @@ export default function Dashboard({ userId, userEmail }) {
   const [portalLoading, setPortalLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [bookingScope, setBookingScope] = useState("upcoming"); // 'upcoming' | 'past'
+  const [pastBookings, setPastBookings] = useState([]);
+  const [markPaid, setMarkPaid] = useState(null); // the booking being marked as paid
+  const bookingScopeRef = useRef("upcoming");
+  const pastReq = useRef(0);
   // Bumped whenever something changed on the server, so panels that fetch for
   // themselves (recovered money, revenue chart) re-read at the same moment.
   const [syncKey, setSyncKey] = useState(0);
@@ -190,6 +198,52 @@ export default function Dashboard({ userId, userEmail }) {
     setBookingsReady(true);
   }
 
+  async function loadPastBookings() {
+    const mine = ++pastReq.current;
+    try {
+      const res = await fetch("/api/bookings/list?scope=past", { cache: "no-store" });
+      if (res.ok) {
+        const rows = await res.json();
+        if (mine === pastReq.current) setPastBookings(rows);
+      }
+    } catch {}
+  }
+
+  function changeBookingScope(scope) {
+    bookingScopeRef.current = scope;
+    setBookingScope(scope);
+    if (scope === "past") loadPastBookings();
+  }
+
+  // Shows a payment change on screen at once, in both lists.
+  function patchBookingLocal(id, fields) {
+    const apply = (list) => list.map((x) => (x.id === id ? { ...x, ...fields } : x));
+    setBookings(apply);
+    setPastBookings(apply);
+  }
+
+  async function markUnpaid(b) {
+    if (!window.confirm(`Mark ${b.dogs?.dog_name || "this booking"} as not paid?`)) return;
+    const before = { paid_at: b.paid_at, paid_amount: b.paid_amount, paid_method: b.paid_method, receipt_sent_at: b.receipt_sent_at };
+    patchBookingLocal(b.id, { paid_at: null, paid_amount: null, paid_method: null, receipt_sent_at: null });
+    let res;
+    try {
+      res = await fetch("/api/bookings/payment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: b.id, paid: false }) });
+    } catch { res = null; }
+    if (res && res.ok) syncAll(0);
+    else {
+      patchBookingLocal(b.id, before);
+      showToast("Could not update the payment", "error");
+    }
+  }
+
+  function paymentSaved(updated, receipt) {
+    patchBookingLocal(updated.id, { paid_at: updated.paid_at, paid_amount: updated.paid_amount, paid_method: updated.paid_method, receipt_sent_at: updated.receipt_sent_at });
+    setMarkPaid(null);
+    showToast(receipt === "sent" ? "Marked as paid. Receipt emailed." : receipt === "failed" ? "Marked as paid, but the receipt email failed." : "Marked as paid");
+    syncAll(0);
+  }
+
   // One call that brings every live number up to date. Many events can arrive
   // in a burst (a cron run touching 30 dogs), so they are folded into a single
   // refresh a moment later instead of 30 requests.
@@ -199,6 +253,7 @@ export default function Dashboard({ userId, userEmail }) {
       syncTimer.current = null;
       loadDogs();
       loadBookings();
+      if (bookingScopeRef.current === "past") loadPastBookings();
       loadServicesCount();
       setSyncKey((k) => k + 1);
     }, delay);
@@ -771,7 +826,8 @@ export default function Dashboard({ userId, userEmail }) {
       ? []
       : [{ key: "services", title: "Add your services and prices", hint: "Clients pick from your menu when they book.", done: servicesCount > 0, actionLabel: "Add", onAction: () => { setSettingsTab("services"); setActiveView("settings"); } }]),
   ];
-  const bookingsHaveService = bookings.some((b) => b.service_name);
+  const shownBookings = bookingScope === "past" ? pastBookings : bookings;
+  const bookingsHaveService = shownBookings.some((b) => b.service_name);
   const homeReady = !isLoading && bookingsReady && settingsReady && servicesReady;
   const stats = weekStats(dogs, bookings);
   const failedDogs = failedReminderDogs(dogs);
@@ -1241,6 +1297,11 @@ export default function Dashboard({ userId, userEmail }) {
         {/* ---------- Analytics view ---------- */}
         {activeView === "analytics" && (
           <div className="pd-analytics-grid">
+            <ServiceInsights
+              refreshKey={syncKey}
+              onOpenBookings={() => { changeBookingScope("past"); setActiveView("bookings"); }}
+              onOpenServices={() => openSettings("services")}
+            />
             <RevenueChart refreshKey={syncKey} />
             <StatusDonut counts={counts} />
             <ReminderBreakdown dogs={dogs} />
@@ -1250,51 +1311,76 @@ export default function Dashboard({ userId, userEmail }) {
 
         {/* ---------- Bookings view ---------- */}
         {activeView === "bookings" && (
-          <div className="pd-table">
-            {bookings.length === 0 ? (
-              <div className="pd-tempty">No upcoming bookings yet. They&apos;ll show up here the moment an owner books through their reminder link.</div>
-            ) : (
-              <>
-                <div className={`pd-trow pd-thead pd-trow-bk${bookingsHaveService ? " has-svc" : ""}`}>
-                  <div>Dog</div>
-                  <div>Owner</div>
-                  {bookingsHaveService && <div>Service</div>}
-                  <div>When</div>
-                  <div>Status</div>
+          <>
+            <div className="pd-bk-tabs" role="tablist" aria-label="Bookings">
+              <button role="tab" aria-selected={bookingScope === "upcoming"} className={bookingScope === "upcoming" ? "is-on" : ""} onClick={() => changeBookingScope("upcoming")}>Upcoming</button>
+              <button role="tab" aria-selected={bookingScope === "past"} className={bookingScope === "past" ? "is-on" : ""} onClick={() => changeBookingScope("past")}>Past 90 days</button>
+            </div>
+            <div className="pd-table">
+              {shownBookings.length === 0 ? (
+                <div className="pd-tempty">
+                  {bookingScope === "past"
+                    ? "No past bookings in the last 90 days."
+                    : "No upcoming bookings yet. They'll show up here the moment an owner books through their reminder link."}
                 </div>
-                {bookings.map((b) => (
-                  <div className={`pd-trow pd-trow-bk${bookingsHaveService ? " has-svc" : ""}`} key={b.id}>
-                    <div className="pd-tcell-dog pd-bk-dog">
-                      <Avatar name={b.dogs?.dog_name || "?"} size={32} />
-                      <div>
-                        <div className="pd-tcell-dog-name">{b.dogs?.dog_name}</div>
-                        <div className="pd-tcell-dog-breed">{b.dogs?.breed}</div>
-                      </div>
-                    </div>
-                    <div className="pd-bk-owner">
-                      {b.dogs?.owner_name}
-                      {b.dogs?.phone && <div className="pd-tcell-due-sub">{b.dogs.phone}</div>}
-                    </div>
-                    {bookingsHaveService && (
-                      <div className="pd-bk-svc">
-                        {b.service_name ? describeBooking(b).withSize : <span className="sub">Not chosen</span>}
-                        {b.price != null && <div className="pd-tcell-due-sub">{moneyText(b.price, b.currency, b.price_is_starting)}{b.addons?.length ? ` incl. ${b.addons.map((a) => a.name).join(", ")}` : ""}</div>}
-                      </div>
-                    )}
-                    <div className="pd-tcell-due pd-bk-when">
-                      {new Date(b.slot_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: timezone })}
-                      <div className="pd-tcell-due-sub">{new Date(b.slot_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })}</div>
-                    </div>
-                    <div className="pd-bk-status">
-                      <span className="badge ok">{b.status}</span>
-                      {Date.now() - new Date(b.created_at).getTime() < 24 * 3600 * 1000 && <span className="badge" style={{ marginLeft: 6 }}>New</span>}
-                      <div><button className="ghost" style={{ marginTop: 6, padding: "4px 10px", fontSize: ".78rem" }} onClick={() => cancelBooking(b)}>Cancel</button></div>
-                    </div>
+              ) : (
+                <>
+                  <div className={`pd-trow pd-thead pd-trow-bk${bookingsHaveService ? " has-svc" : ""}`}>
+                    <div>Dog</div>
+                    <div>Owner</div>
+                    {bookingsHaveService && <div>Service</div>}
+                    <div>When</div>
+                    <div>Status</div>
                   </div>
-                ))}
-              </>
-            )}
-          </div>
+                  {shownBookings.map((b) => (
+                    <div className={`pd-trow pd-trow-bk${bookingsHaveService ? " has-svc" : ""}`} key={b.id}>
+                      <div className="pd-tcell-dog pd-bk-dog">
+                        <Avatar name={b.dogs?.dog_name || "?"} size={32} />
+                        <div>
+                          <div className="pd-tcell-dog-name">{b.dogs?.dog_name}</div>
+                          <div className="pd-tcell-dog-breed">{b.dogs?.breed}</div>
+                        </div>
+                      </div>
+                      <div className="pd-bk-owner">
+                        {b.dogs?.owner_name}
+                        {b.dogs?.phone && <div className="pd-tcell-due-sub">{b.dogs.phone}</div>}
+                      </div>
+                      {bookingsHaveService && (
+                        <div className="pd-bk-svc">
+                          {b.service_name ? describeBooking(b).withSize : <span className="sub">Not chosen</span>}
+                          {b.price != null && <div className="pd-tcell-due-sub">{moneyText(b.price, b.currency, b.price_is_starting)}{b.addons?.length ? ` incl. ${b.addons.map((a) => a.name).join(", ")}` : ""}</div>}
+                        </div>
+                      )}
+                      <div className="pd-tcell-due pd-bk-when">
+                        {new Date(b.slot_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: timezone })}
+                        <div className="pd-tcell-due-sub">{new Date(b.slot_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })}</div>
+                      </div>
+                      <div className="pd-bk-status">
+                        <span className="badge ok">{bookingScope === "past" ? "done" : b.status}</span>
+                        {bookingScope === "upcoming" && Date.now() - new Date(b.created_at).getTime() < 24 * 3600 * 1000 && <span className="badge" style={{ marginLeft: 6 }}>New</span>}
+                        {b.paid_at ? (
+                          <div className="pd-bk-paid" translate="no">
+                            {paidSummary(b, timezone)}
+                            {b.receipt_sent_at ? " · receipt sent" : ""}
+                            {" "}<button className="link" style={{ background: "none", border: "none", padding: 0, font: "inherit" }} onClick={() => markUnpaid(b)}>Undo</button>
+                          </div>
+                        ) : (
+                          <div className="pd-bk-actions">
+                            <button className="ghost" onClick={() => setMarkPaid(b)}>Mark paid</button>
+                            {bookingScope === "upcoming" && <button className="ghost" onClick={() => cancelBooking(b)}>Cancel</button>}
+                          </div>
+                        )}
+                        {b.paid_at && bookingScope === "upcoming" && (
+                          <div className="pd-bk-actions"><button className="ghost" onClick={() => cancelBooking(b)}>Cancel</button></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            {markPaid && <MarkPaidModal booking={markPaid} onClose={() => setMarkPaid(null)} onSaved={paymentSaved} />}
+          </>
         )}
 
         {/* ---------- Archived view ---------- */}

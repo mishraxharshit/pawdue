@@ -2,7 +2,7 @@ import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../lib/booking";
 import { notifyBookingCreated } from "../../../lib/bookingNotify";
 import { rateLimit } from "../../../lib/rateLimit";
-import { loadActiveServices, loadShopSettings } from "../../../lib/bookingMenu";
+import { loadActiveServices, loadShopSettings, loadPaymentInfo } from "../../../lib/bookingMenu";
 import { priceSelection } from "../../../lib/bookingServices";
 
 export default async function handler(req, res) {
@@ -103,9 +103,13 @@ export default async function handler(req, res) {
   // can stop right after the response; failures are logged, never thrown.
   await notifyBookingCreated(admin, { userId: dog.user_id, dog, booking });
 
+  const payment = await loadPaymentInfo(admin, dog.user_id);
+
   return res.status(201).json({
     booking,
     dogName: dog.dog_name,
+    // Shown on the confirmation screen: how to pay the groomer directly.
+    payment: payment.methods.length ? { methods: payment.methods, note: payment.note } : null,
     summary: picked.value
       ? {
           lines: picked.value.lines,

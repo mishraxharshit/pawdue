@@ -2,7 +2,7 @@ import { createSupabaseAdminClient } from "../../../../lib/supabase/admin";
 import { generateAvailableSlots, getAvailabilitySettings, getBusinessTimezone } from "../../../../lib/booking";
 import { rateLimit } from "../../../../lib/rateLimit";
 import { computeStatus } from "../../../../lib/breedIntervals";
-import { loadActiveServices, loadShopSettings, loadDogSize, loadLastPick } from "../../../../lib/bookingMenu";
+import { loadActiveServices, loadShopSettings, loadDogSize, loadLastPick, loadPaymentInfo } from "../../../../lib/bookingMenu";
 import { suggestSize } from "../../../../lib/breedSize";
 import { publicService, menuRequiresChoice } from "../../../../lib/bookingServices";
 
@@ -30,13 +30,14 @@ export default async function handler(req, res) {
   // These three lookups do not depend on each other, so run them together
   // instead of one after another (each is a network round trip to Supabase).
   // Only upcoming bookings matter for availability, so old ones are skipped.
-  const [bookingsRes, settings, timezone, services, shop, dogSize] = await Promise.all([
+  const [bookingsRes, settings, timezone, services, shop, dogSize, payment] = await Promise.all([
     admin.from("bookings").select("slot_at").eq("user_id", dog.user_id).gte("slot_at", new Date().toISOString()),
     getAvailabilitySettings(admin, dog.user_id),
     getBusinessTimezone(admin, dog.user_id),
     loadActiveServices(admin, dog.user_id),
     loadShopSettings(admin, dog.user_id),
     loadDogSize(admin, dog.id),
+    loadPaymentInfo(admin, dog.user_id),
   ]);
 
   const lastPick = menuRequiresChoice(services) ? await loadLastPick(admin, dog.id, services) : null;
@@ -57,6 +58,9 @@ export default async function handler(req, res) {
     breed: dog.breed,
     slots,
     timezone,
+    // How the groomer takes payment. Only the names are shown before booking;
+    // handles and numbers come after, in the confirmation. Null when not set.
+    payment: payment.methods.length ? { methods: payment.methods.map((m) => ({ type: m.type, label: m.label })) } : null,
     // The groomer's menu, only when they have set one up. Without it the page
     // books a plain slot exactly as before.
     menu: menuRequiresChoice(services)

@@ -28,11 +28,15 @@ export default async function handler(req, res) {
   const earliestWeekStart = startOfWeek(new Date());
   earliestWeekStart.setDate(earliestWeekStart.getDate() - (WEEKS - 1) * 7);
 
-  const { data: bookings, error } = await supabase
-    .from("bookings")
-    .select("created_at")
-    .eq("status", "confirmed")
-    .gte("created_at", earliestWeekStart.toISOString());
+  const currencyRes = await supabase.from("business_settings").select("currency").eq("user_id", user.id).maybeSingle();
+  const currency = (!currencyRes.error && currencyRes.data?.currency) || "USD";
+
+  // Real booking prices once supabase/add-services.sql has been run.
+  const since = earliestWeekStart.toISOString();
+  const pricedRes = await supabase.from("bookings").select("created_at, price").eq("status", "confirmed").gte("created_at", since);
+  const { data: bookings, error } = pricedRes.error
+    ? await supabase.from("bookings").select("created_at").eq("status", "confirmed").gte("created_at", since)
+    : pricedRes;
 
   if (error) return res.status(500).json({ error: error.message });
 
@@ -42,20 +46,24 @@ export default async function handler(req, res) {
   for (let i = WEEKS - 1; i >= 0; i--) {
     const weekStart = startOfWeek(new Date());
     weekStart.setDate(weekStart.getDate() - i * 7);
-    buckets.push({ weekStart: weekStart.toISOString(), count: 0 });
+    buckets.push({ weekStart: weekStart.toISOString(), count: 0, revenue: 0 });
   }
 
   for (const b of bookings || []) {
     const weekStart = startOfWeek(new Date(b.created_at)).toISOString();
     const bucket = buckets.find((x) => x.weekStart === weekStart);
-    if (bucket) bucket.count += 1;
+    if (bucket) {
+      bucket.count += 1;
+      // A booking made from the menu has its real price; others use the typical one.
+      bucket.revenue += b.price !== null && b.price !== undefined ? Number(b.price) : price;
+    }
   }
 
   const weeks = buckets.map((b) => ({
     weekStart: b.weekStart,
     count: b.count,
-    revenue: b.count * price,
+    revenue: b.revenue,
   }));
 
-  return res.status(200).json({ pricePerVisit: price, weeks });
+  return res.status(200).json({ pricePerVisit: price, currency, weeks });
 }

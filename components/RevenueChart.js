@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { currencySymbol } from "../lib/services";
 
-function formatMoney(n) {
-  return `$${Math.round(n).toLocaleString()}`;
+function formatMoney(n, currency) {
+  return `${currencySymbol(currency)}${Math.round(n).toLocaleString()}`;
 }
 
 export default function RevenueChart({ refreshKey = 0 }) {
@@ -26,7 +27,7 @@ export default function RevenueChart({ refreshKey = 0 }) {
     <div className="pd-chart-card">
       <div className="pd-chart-head">
         <h3>Revenue recovered, last 8 weeks</h3>
-        <span className="pd-chart-sub">based on ${data.pricePerVisit}/visit</span>
+        <span className="pd-chart-sub" translate="no">real prices, {formatMoney(data.pricePerVisit, data.currency)} when no service was chosen</span>
       </div>
       <svg viewBox={`0 0 ${width} ${chartHeight + 30}`} className="pd-chart-svg" preserveAspectRatio="xMidYMid meet">
         {data.weeks.map((w, i) => {
@@ -43,7 +44,7 @@ export default function RevenueChart({ refreshKey = 0 }) {
               />
               {w.revenue > 0 && (
                 <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" className="pd-chart-value">
-                  {formatMoney(w.revenue)}
+                  {formatMoney(w.revenue, data.currency)}
                 </text>
               )}
               <text x={x + barWidth / 2} y={chartHeight + 20} textAnchor="middle" className="pd-chart-axis-label">

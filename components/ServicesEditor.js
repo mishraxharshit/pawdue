@@ -3,6 +3,7 @@
 // medium / large mean, and a message for clients). The booking page and emails
 // start using all of this in the next phases.
 import { useEffect, useMemo, useState } from "react";
+import PaymentSettings from "./PaymentSettings";
 import {
   SIZES, SUGGESTED_SERVICES, MAX_SERVICES, CURRENCIES, DEFAULT_SIZE_GUIDE,
   priceLabel, durationLabel, groupServices, currencySymbol,
@@ -282,6 +283,8 @@ export default function ServicesEditor({ onToast }) {
           </div>
         </form>
       )}
+
+      <PaymentSettings onToast={onToast} />
 
       {editing && (
         <div className="pd-modal-overlay" onMouseDown={() => setEditing(null)}>
