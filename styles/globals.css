@@ -1492,3 +1492,40 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
   .pd-trow-bk .pd-bk-owner { grid-area: owner; }
   .pd-trow-bk .pd-bk-when { grid-area: when; text-align: right; }
 }
+
+/* ============================================================
+   Payments + service insights
+   ============================================================ */
+.pd-bk-tabs, .pd-ins-range { display: inline-flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 100px; padding: 3px; }
+.pd-bk-tabs { margin-bottom: 12px; }
+.pd-bk-tabs button, .pd-ins-range button { background: transparent; color: var(--sub); border: none; border-radius: 100px; padding: 6px 14px; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.pd-bk-tabs button.is-on, .pd-ins-range button.is-on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.pd-bk-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.pd-bk-actions button { padding: 4px 10px; font-size: .78rem; }
+.pd-bk-paid { margin-top: 6px; font-size: .78rem; color: var(--ok); font-weight: 700; }
+
+.pd-pay-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.pd-pay-row { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 10px; align-items: center; }
+.pd-pay-row input[type="text"], .pd-pay-row input:not([type]) { margin: 0; }
+.pd-pay-check { display: flex; align-items: center; gap: 8px; font-weight: 600; margin: 0; cursor: pointer; }
+.pd-pay-check input { width: auto; margin: 0; }
+@media (max-width: 560px) { .pd-pay-row { grid-template-columns: 1fr; } }
+
+.pd-ins-wide { grid-column: 1 / -1; }
+.pd-ins-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+@media (max-width: 760px) { .pd-ins-kpis { grid-template-columns: 1fr 1fr; } }
+.pd-ins-kpi { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+.pd-ins-kpi-value { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+.pd-ins-kpi-label { font-size: .8rem; color: var(--sub); margin-top: 4px; }
+.pd-ins-kpi-sub { font-size: .72rem; color: var(--sub); margin-top: 2px; }
+.pd-ins-nudge { display: block; width: 100%; text-align: left; margin-top: 12px; background: #fbf1df; color: var(--ink); border: 1px solid #ecd9b3; border-radius: 12px; padding: 10px 14px; font-size: .85rem; font-weight: 500; cursor: pointer; }
+.pd-ins-cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; margin-top: 18px; }
+@media (max-width: 760px) { .pd-ins-cols { grid-template-columns: 1fr; gap: 18px; } }
+.pd-ins-h { margin: 0 0 10px; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--sub); }
+.pd-ins-bars { display: flex; flex-direction: column; gap: 9px; }
+.pd-ins-bar-row { display: grid; grid-template-columns: minmax(70px, 130px) 1fr auto; gap: 10px; align-items: center; font-size: .85rem; }
+.pd-ins-bar-label { overflow-wrap: anywhere; }
+.pd-ins-bar-track { height: 9px; border-radius: 6px; background: var(--bg); overflow: hidden; }
+.pd-ins-bar-fill { height: 100%; border-radius: 6px; background: var(--accent); }
+.pd-ins-bar-value { font-weight: 700; font-size: .82rem; white-space: nowrap; }
+.pd-ins-note { margin: 12px 0 0; font-size: .82rem; color: var(--sub); }

@@ -134,6 +134,18 @@ export default function BookingPage() {
               {confirmed.summary.isStarting && <span className="pd-pick-desc">{translate("booking.startingNote")}</span>}
             </div>
           )}
+          {confirmed.payment && (
+            <div className="pd-pick-note">
+              <b>{translate("booking.payHeading")}</b>
+              <div>{translate("booking.payDirect")}</div>
+              <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                {confirmed.payment.methods.map((m) => (
+                  <li key={m.type} translate="no">{m.detail ? `${m.label}: ${m.detail}` : m.label}</li>
+                ))}
+              </ul>
+              {confirmed.payment.note && <div style={{ marginTop: 6 }}>{confirmed.payment.note}</div>}
+            </div>
+          )}
           {confirmed.summary?.bookingNote && (
             <p className="pd-pick-note"><b>{translate("booking.groomerNote")}:</b> {confirmed.summary.bookingNote}</p>
           )}
@@ -186,6 +198,13 @@ export default function BookingPage() {
         ))}
 
         {error && <div className="error">{error}</div>}
+
+        {info.payment && (
+          <p className="pd-pick-note" style={{ marginTop: 14 }}>
+            <b>{translate("booking.payHeading")}:</b> {translate("booking.payDirect")} {translate("booking.payAccepted")}{" "}
+            <span translate="no">{info.payment.methods.map((m) => m.label).join(", ")}.</span>
+          </p>
+        )}
 
         {selectedSlot && info.menu && !priceSelection(info.menu.services, pick).value && (
           <p className="sub" style={{ marginTop: 10 }}>{translate("booking.pickServiceFirst")}</p>
