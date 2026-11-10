@@ -54,8 +54,8 @@ export default async function handler(req, res) {
     const bucket = buckets.find((x) => x.weekStart === weekStart);
     if (bucket) {
       bucket.count += 1;
-      // A booking made from the menu has its real price; others use the typical one.
-      bucket.revenue += b.price !== null && b.price !== undefined ? Number(b.price) : price;
+      // Only real booking prices count. A booking made without a service adds no money.
+      bucket.revenue += b.price !== null && b.price !== undefined ? Number(b.price) : 0;
     }
   }
 

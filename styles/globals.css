@@ -1529,3 +1529,66 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
 .pd-ins-bar-fill { height: 100%; border-radius: 6px; background: var(--accent); }
 .pd-ins-bar-value { font-weight: 700; font-size: .82rem; white-space: nowrap; }
 .pd-ins-note { margin: 12px 0 0; font-size: .82rem; color: var(--sub); }
+/* ============================================================
+   Home hero: what PawDue brought back (RecoveredHero)
+   ============================================================ */
+.pd-rec { position: relative; overflow: hidden; background: radial-gradient(120% 140% at 0% 0%, #2A7261 0%, #1F5C4F 45%, #174A40 100%); color: #fff; border-radius: 20px; padding: 24px 26px 20px; margin-bottom: 14px; }
+.pd-rec::after { content: ""; position: absolute; right: -60px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(closest-side, rgba(242,200,121,.22), transparent); pointer-events: none; }
+.pd-rec-loading { min-height: 210px; opacity: .85; animation: pd-rec-breathe 1.4s ease-in-out infinite; }
+.pd-rec-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px; position: relative; z-index: 1; }
+.pd-rec-main { flex: 1 1 280px; min-width: 0; }
+.pd-rec-kicker { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; letter-spacing: .02em; opacity: .9; }
+.pd-rec-live { width: 8px; height: 8px; border-radius: 50%; background: #7BE0AE; box-shadow: 0 0 0 0 rgba(123,224,174,.6); animation: pd-rec-pulse 2s infinite; }
+.pd-rec-total { font-size: clamp(2.6rem, 7vw, 3.8rem); font-weight: 800; line-height: 1.05; letter-spacing: -.03em; margin-top: 8px; background: linear-gradient(100deg, #fff 38%, #F6D793 50%, #fff 62%); background-size: 260% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: pd-rec-sweep 2.4s ease .5s 1 both; font-variant-numeric: tabular-nums; }
+.pd-rec-sub { margin-top: 4px; font-size: .95rem; opacity: .92; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.pd-rec-delta { font-size: .76rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; }
+.pd-rec-delta.is-up { background: rgba(123,224,174,.22); color: #BFF3D9; }
+.pd-rec-delta.is-down { background: rgba(246,215,147,.22); color: #F6D793; }
+.pd-rec-weeks { flex: 0 0 auto; }
+.pd-rec-weeks-bars { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+.pd-rec-week { width: 14px; height: 100%; display: flex; align-items: flex-end; }
+.pd-rec-week i { display: block; width: 100%; height: 0; border-radius: 5px 5px 2px 2px; background: rgba(255,255,255,.35); transition: height .9s cubic-bezier(.2,.8,.2,1); transition-delay: var(--d, 0ms); }
+.pd-rec-week i.is-now { background: #F2C879; }
+.is-grown .pd-rec-week i { height: var(--h); }
+.pd-rec-weeks-cap { font-size: .7rem; opacity: .7; margin-top: 6px; text-align: right; }
+.pd-rec-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 26px; margin-top: 20px; position: relative; z-index: 1; }
+.pd-rec-h { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 800; opacity: .75; margin-bottom: 10px; }
+.pd-rec-rows { display: flex; flex-direction: column; gap: 10px; }
+.pd-rec-row { display: grid; grid-template-columns: minmax(80px, 150px) 1fr auto; gap: 12px; align-items: center; font-size: .88rem; opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .5s ease; transition-delay: var(--d, 0ms); }
+.is-grown .pd-rec-row { opacity: 1; transform: none; }
+.pd-rec-name { overflow-wrap: anywhere; font-weight: 600; }
+.pd-rec-track { height: 10px; border-radius: 6px; background: rgba(255,255,255,.14); overflow: hidden; }
+.pd-rec-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #F2C879, #F6D793); transition: width 1s cubic-bezier(.2,.8,.2,1); transition-delay: var(--d, 0ms); }
+.pd-rec-fill.is-addon { background: linear-gradient(90deg, #7BE0AE, #BFF3D9); }
+.is-grown .pd-rec-row .pd-rec-fill { width: var(--w); }
+.pd-rec-val { white-space: nowrap; font-size: .85rem; }
+.pd-rec-val b { font-weight: 800; }
+.pd-rec-val span { opacity: .65; font-size: .76rem; margin-left: 4px; }
+.pd-rec-fine { margin: 4px 0 0; font-size: .78rem; opacity: .75; }
+.pd-rec-chips { display: grid; gap: 10px; align-content: start; }
+.pd-rec-chip { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 11px 14px; display: flex; align-items: baseline; gap: 12px; }
+.pd-rec-chip b { font-size: 1.35rem; font-weight: 800; line-height: 1.1; flex: none; font-variant-numeric: tabular-nums; }
+.pd-rec-chip b em { font-style: normal; opacity: .5; margin: 0 2px; }
+.pd-rec-chip span { font-size: .76rem; opacity: .85; line-height: 1.3; }
+.pd-rec-note { position: relative; z-index: 1; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.14); font-size: .9rem; font-weight: 600; color: #F6E3B8; }
+.pd-rec-empty { margin-top: 10px; max-width: 520px; }
+.pd-rec-empty-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.01em; }
+.pd-rec-empty p, .pd-rec-nudge p { margin: 8px 0 0; font-size: .92rem; opacity: .9; line-height: 1.5; }
+.pd-rec-cta { margin-top: 12px; background: #F2C879; color: #3A2A06; border: 0; border-radius: 99px; padding: 9px 18px; font-weight: 800; font-size: .85rem; cursor: pointer; }
+.pd-rec-cta:hover { background: #F6D793; }
+@keyframes pd-rec-pulse { 0% { box-shadow: 0 0 0 0 rgba(123,224,174,.55); } 70% { box-shadow: 0 0 0 9px rgba(123,224,174,0); } 100% { box-shadow: 0 0 0 0 rgba(123,224,174,0); } }
+@keyframes pd-rec-sweep { to { background-position: 0% 0; } }
+@keyframes pd-rec-breathe { 50% { opacity: .65; } }
+@media (max-width: 720px) {
+  .pd-rec { padding: 20px 18px 16px; }
+  .pd-rec-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .pd-rec-weeks { width: 100%; }
+  .pd-rec-weeks-bars { justify-content: space-between; }
+  .pd-rec-week { flex: 1; }
+  .pd-rec-weeks-cap { text-align: left; }
+  .pd-rec-row { grid-template-columns: minmax(70px, 110px) 1fr auto; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pd-rec *, .pd-rec { animation: none !important; transition: none !important; }
+  .pd-rec-total { background: none; -webkit-text-fill-color: #fff; color: #fff; }
+}
