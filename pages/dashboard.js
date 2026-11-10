@@ -13,7 +13,7 @@ import ImportDogsModal from "../components/ImportDogsModal";
 import BusinessProfileCard from "../components/BusinessProfileCard";
 import CalendarFeedCard from "../components/CalendarFeedCard";
 import LocalTimeNow from "../components/LocalTimeNow";
-import RecoveredTile from "../components/RecoveredTile";
+import RecoveredHero from "../components/RecoveredHero";
 import WinbackModal from "../components/WinbackModal";
 import ServicesEditor from "../components/ServicesEditor";
 import ServiceInsights from "../components/ServiceInsights";
@@ -21,7 +21,7 @@ import MarkPaidModal from "../components/MarkPaidModal";
 import { paidSummary } from "../lib/payments";
 import { describeBooking, moneyText } from "../lib/bookingDetails";
 import SetupBanner from "../components/SetupBanner";
-import { HomeHeader, PausedNotice, HandledBand, NeedsYou, TodaySchedule, ComingUp, GetStarted } from "../components/HomeToday";
+import { HomeHeader, PausedNotice, NeedsYou, TodaySchedule, ComingUp, GetStarted } from "../components/HomeToday";
 import { dayKey, weekStats, failedReminderDogs, comingUp } from "../lib/homeToday";
 import RevenueChart from "../components/RevenueChart";
 import StatusDonut from "../components/StatusDonut";
@@ -1067,9 +1067,7 @@ export default function Dashboard({ userId, userEmail }) {
             {homeReady && autopilotPaused && dogs.length > 0 && <PausedNotice onResume={toggleAutopilot} busy={pauseBusy} />}
             {homeReady && <GetStarted steps={setupSteps} />}
             {homeReady && dogs.length > 0 && (
-              <HandledBand stats={stats}>
-                <RecoveredTile refreshKey={syncKey} />
-              </HandledBand>
+              <RecoveredHero stats={stats} refreshKey={syncKey} onOpenServices={() => openSettings("services")} />
             )}
             {homeReady && dogs.length > 0 && (
               <NeedsYou
