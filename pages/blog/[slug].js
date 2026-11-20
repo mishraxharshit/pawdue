@@ -23,7 +23,13 @@ export async function getStaticProps({ params }) {
 export default function Post({ post, related }) {
   const url = `${SITE}/blog/${post.slug}`;
   const img = `${SITE}${post.og}`;
-  const toc = post.blocks.filter((x) => x.type === "h2");
+  const toc = [...post.blocks.filter((x) => x.type === "h2"), ...(post.blocks.some((x) => x.type === "faq") ? [{ id: "faq", text: "Frequently asked questions" }] : [])];
+
+  const faqItems = post.blocks.filter((x) => x.type === "faq").flatMap((x) => x.items);
+  const stripMd = (t) => t.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  const faqNode = faqItems.length
+    ? [{ "@type": "FAQPage", mainEntity: faqItems.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: stripMd(f.a) } })) }]
+    : [];
 
   const jsonld = JSON.stringify({
     "@context": "https://schema.org",
@@ -48,6 +54,7 @@ export default function Post({ post, related }) {
           { "@type": "ListItem", position: 3, name: post.title, item: url },
         ],
       },
+      ...faqNode,
     ],
   });
 
@@ -91,7 +98,7 @@ export default function Post({ post, related }) {
             srcSet={`/media/${post.hero.name}-800.jpg 800w, /media/${post.hero.name}-1600.jpg 1600w`}
             sizes="(max-width: 1100px) 100vw, 1052px"
             alt={post.hero.alt}
-            fetchPriority="high"
+            fetchpriority="high"
           />
         </div>
 
@@ -103,7 +110,7 @@ export default function Post({ post, related }) {
             </nav>
           )}
           <BlogBody blocks={post.blocks} />
-          <p className={b.note}> This article is general guidance, so adapt it to your own business and the rules where you work.</p>
+          <p className={b.note}>P</p>
         </article>
 
         <section className={b.more}>

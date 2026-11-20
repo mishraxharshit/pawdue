@@ -1592,3 +1592,12 @@ button.pd-status-pill:disabled { opacity: .6; cursor: wait; }
   .pd-rec *, .pd-rec { animation: none !important; transition: none !important; }
   .pd-rec-total { background: none; -webkit-text-fill-color: #fff; color: #fff; }
 }
+/* FAQ and downloads inside articles */
+.faq { margin-top: 12px; }
+.faq details { border-bottom: 1px solid #E1E4DD; padding: 14px 0; }
+.faq summary { cursor: pointer; font-weight: 800; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::after { content: "+"; font-size: 1.3rem; color: #2B5D4C; }
+.faq details[open] summary::after { content: "\2212"; }
+.faq details p { margin: 10px 0 0; }
+.download { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 24px 0; padding: 18px 22px; background: #EEF3EE; border-radius: 20px; }
+.download span { color: #55605A; font-size: .92rem; }

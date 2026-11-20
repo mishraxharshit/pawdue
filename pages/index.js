@@ -10,6 +10,7 @@ import LandingNav from "../components/landing/LandingNav";
 import LoopVideo from "../components/landing/LoopVideo";
 import ValueCalc from "../components/landing/ValueCalc";
 import RotatingWord from "../components/landing/RotatingWord";
+import ProofWall from "../components/landing/ProofWall";
 import { PLANS } from "../lib/plans";
 import s from "../styles/landing.module.css";
 
@@ -294,42 +295,9 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* BUILDING IN PUBLIC: honest, specific, and shows the work continues.
-            Update this list whenever something ships. */}
-        <section className={`${s.sec} ${s.secDark}`}>
-          <div className={s.wrap}>
-            <div className={s.center}>
-              <div className={s.kicker}>Still building, openly</div>
-              <h2 className={s.h2}>PawDue gets better every week, because groomers keep telling us what is missing.</h2>
-              <p className={s.p}>No hype. Here is what has shipped and what has not.</p>
-            </div>
-            <div className={s.ship}>
-              <div className={`${s.shipBox} ${s.shipDone}`}>
-                <h3>Recently built</h3>
-                <ul className={s.list}>
-                  <li><i>&#10003;</i><span>Reminder sequence: up to three gentle emails per cycle, stopping once they book</span></li>
-                  <li><i>&#10003;</i><span>Lapsed clients list, so nobody quietly disappears</span></li>
-                  <li><i>&#10003;</i><span>Message button: WhatsApp opens with your note already written</span></li>
-                  <li><i>&#10003;</i><span>Booking times that follow your own timezone</span></li>
-                  <li><i>&#10003;</i><span>CSV import for your existing client list</span></li>
-                  <li><i>&#10003;</i><span>Faster booking pages for owners</span></li>
-                </ul>
-              </div>
-              <div className={`${s.shipBox} ${s.shipNext}`}>
-                <h3>Not built yet</h3>
-                <ul className={s.list}>
-                  <li><i className={s.hollow} /><span>Automatic WhatsApp and SMS reminders</span></li>
-                  <li><i className={s.hollow} /><span>Taking payments or sending invoices</span></li>
-                  <li><i className={s.hollow} /><span>Separate staff logins</span></li>
-                  <li><i className={s.hollow} /><span>A phone app (it runs in your browser today)</span></li>
-                </ul>
-              </div>
-            </div>
-            <div className={s.founder}>
-              <p><b>From the founder.</b> PawDue is built by one person who wants groomers to spend their energy on dogs, not on chasing rebookings. I read every message sent through the feedback page. If something in PawDue slows you down, tell me and it goes on the list.</p>
-            </div>
-          </div>
-        </section>
+        {/* PROOF: real groomer messages (hidden until you add some in
+            lib/proof.js) and short reels. */}
+        <ProofWall />
 
         {/* PRICING TEASER: numbers come from lib/plans.js so they cannot drift. */}
         <section className={s.sec}>
