@@ -89,6 +89,25 @@ export default function BlogBody({ blocks }) {
               </div>
             );
           }
+          case "faq":
+            return (
+              <div key={idx} className={b.faq}>
+                <h2 id="faq">Frequently asked questions</h2>
+                {bl.items.map((f) => (
+                  <details key={f.q}>
+                    <summary>{f.q}</summary>
+                    <p>{inline(f.a)}</p>
+                  </details>
+                ))}
+              </div>
+            );
+          case "download":
+            return (
+              <div key={idx} className={b.download}>
+                <a className={b.ctaBtn} href={bl.href} download>{bl.label}</a>
+                {bl.note && <span>{bl.note}</span>}
+              </div>
+            );
           case "cta":
             return (
               <div key={idx} className={b.cta}>
